@@ -4,6 +4,9 @@ import json
 import logging
 import re
 import pandas as pd
+import matplotlib.pyplot as plt
+from gensim.models.coherencemodel import CoherenceModel
+from gensim.corpora.dictionary import Dictionary
 import numpy as np
 from flask import Flask, request, jsonify, send_file, render_template
 import nltk
@@ -252,34 +255,34 @@ def process_topic_modeling():
     if not params:
         return jsonify({"error": "No JSON payload"}), 400
 
+    # Extract parameters from the payload
     method = params.get("method", "lda").lower()
     csv_b64 = params.get("base64")
     file_type = params.get("fileType", "csv").lower()
     column = params.get("column")
     num_topics = int(params.get("numTopics", 5))
     remove_sw = params.get("stopwords", False)
-    words_per_topic = params.get("wordsPerTopic", 5)
-    embedding_model_name = ''
-    embedding_model_name = params.get("embeddingModel")
-    random_state = params.get("randomState", 42)
-    if embedding_model_name == '':
-        embedding_model_name = "all-MiniLM-L6-v2"
-    print(embedding_model_name)
+    words_per_topic = int(params.get("wordsPerTopic", 5))
+    embedding_model_name = params.get("embeddingModel", "")  # Used only for bertopic
+    random_state = int(params.get("randomState", 42))
+    coherence_analysis = params.get("coherence_analysis", False)  # extra flag
+
+    # Check required parameters
     if not csv_b64 or not column:
         missing = [param for param in ["base64", "column"] if not params.get(param)]
-        return jsonify({"error": f"Must provide 'base64' data and 'column'."}), 400
+        return jsonify({"error": f"Must provide {', '.join(missing)}."}), 400
 
-    # Decode CSV/XLSX
+    # Decode the file data and parse into a DataFrame
     try:
-        csv_bytes = base64.b64decode(csv_b64)
+        file_bytes = base64.b64decode(csv_b64)
         if file_type == "xlsx":
-            df, _ = parse_xlsx_from_bytes(csv_bytes)
+            df, _ = parse_xlsx_from_bytes(file_bytes)
         elif file_type == "csv":
-            df, _ = parse_csv_from_bytes(csv_bytes)
+            df, _ = parse_csv_from_bytes(file_bytes)
         else:
             return jsonify({"error": f"Unsupported file type '{file_type}'."}), 400
     except Exception as e:
-        return jsonify({"error": f"Error decoding {file_type.upper()} data: {str(e)}"}), 400
+        return jsonify({"error": f"Error decoding file: {str(e)}"}), 400
 
     if column not in df.columns:
         return jsonify({"error": f"Column '{column}' not found in dataset."}), 400
@@ -288,10 +291,13 @@ def process_topic_modeling():
     if not texts:
         return jsonify({"error": "No valid rows in dataset."}), 400
 
+    # Create stopword set if needed
     user_stops = set(stopwords.words("english")) if remove_sw else set()
+
     topic_labels = []
 
     try:
+        # --- Topic modeling without coherence analysis ---
         if method == "lda":
             vectorizer = CountVectorizer(
                 stop_words=list(user_stops) if remove_sw else None,
@@ -301,7 +307,7 @@ def process_topic_modeling():
             vocab = vectorizer.get_feature_names_out()
             lda_model = LatentDirichletAllocation(n_components=num_topics, random_state=random_state)
             lda_model.fit(X)
-            for t_idx, comp in enumerate(lda_model.components_):
+            for comp in lda_model.components_:
                 top_indices = comp.argsort()[::-1][:words_per_topic]
                 top_words = [vocab[i] for i in top_indices]
                 topic_labels.append(f": {', '.join(top_words)}")
@@ -314,7 +320,7 @@ def process_topic_modeling():
             vocab = vectorizer.get_feature_names_out()
             nmf_model = NMF(n_components=num_topics, random_state=random_state)
             nmf_model.fit(X)
-            for t_idx, comp in enumerate(nmf_model.components_):
+            for comp in nmf_model.components_:
                 top_indices = comp.argsort()[::-1][:words_per_topic]
                 top_words = [vocab[i] for i in top_indices]
                 topic_labels.append(f": {', '.join(top_words)}")
@@ -327,30 +333,121 @@ def process_topic_modeling():
             vocab = vectorizer.get_feature_names_out()
             svd_model = TruncatedSVD(n_components=num_topics, random_state=random_state)
             svd_model.fit(X)
-            for t_idx, row in enumerate(svd_model.components_):
+            for row in svd_model.components_:
                 top_indices = row.argsort()[::-1][:words_per_topic]
                 top_words = [vocab[i] for i in top_indices]
                 topic_labels.append(f": {', '.join(top_words)}")
         elif method == "bertopic":
+            # For BERTopic, default embedding model if not specified
+            if not embedding_model_name.strip():
+                embedding_model_name = "all-MiniLM-L6-v2"
             embedding_model = SentenceTransformer(embedding_model_name)
             embeddings = embedding_model.encode(texts, show_progress_bar=False)
-            topic_model = BERTopic(verbose=False, nr_topics=num_topics)   
+            topic_model = BERTopic(verbose=False, nr_topics=num_topics)
             topics_result, _ = topic_model.fit_transform(texts, embeddings)
+            # Exclude the outlier topic (commonly represented as -1)
             unique_topics = sorted(set(topics_result) - {-1})
             for t_id in unique_topics:
                 top_words_tuples = topic_model.get_topic(t_id)
                 top_words = [pair[0] for pair in top_words_tuples[:words_per_topic]]
-                topic_labels.append(f" {', '.join(top_words)}")
+                topic_labels.append(f": {', '.join(top_words)}")
         else:
             return jsonify({"error": f"Unsupported method '{method}'."}), 400
 
-        if not topic_labels:
-            return jsonify({"error": "No topics extracted."}), 400
-
+        # --- If coherence analysis is requested (only for lda, nmf, or lsa) ---
+        if coherence_analysis and method in ["lda", "nmf", "lsa"]:
+            min_topics = int(params.get("min_topics", 2))
+            max_topics = int(params.get("max_topics", num_topics))
+            step = int(params.get("step", 1))
+            coherence_scores = []
+            topics_range = list(range(min_topics, max_topics + 1, step))
+            # Tokenize texts for coherence computation
+            tokenized_texts = [nltk.word_tokenize(text.lower()) for text in texts]
+            dictionary = Dictionary(tokenized_texts)
+            corpus = [dictionary.doc2bow(text) for text in tokenized_texts]
+            for k in topics_range:
+                if method == "lda":
+                    vectorizer = CountVectorizer(
+                        stop_words=list(user_stops) if remove_sw else None,
+                        token_pattern=r"(?u)\b\w+\b"
+                    )
+                    X = vectorizer.fit_transform(texts)
+                    vocab = vectorizer.get_feature_names_out()
+                    model_k = LatentDirichletAllocation(n_components=k, random_state=random_state)
+                    model_k.fit(X)
+                    topics = []
+                    for comp in model_k.components_:
+                        top_indices = comp.argsort()[::-1][:words_per_topic]
+                        top_words = [vocab[i] for i in top_indices]
+                        topics.append(top_words)
+                elif method == "nmf":
+                    vectorizer = TfidfVectorizer(
+                        stop_words=list(user_stops) if remove_sw else None,
+                        token_pattern=r"(?u)\b\w+\b"
+                    )
+                    X = vectorizer.fit_transform(texts)
+                    vocab = vectorizer.get_feature_names_out()
+                    model_k = NMF(n_components=k, random_state=random_state)
+                    model_k.fit(X)
+                    topics = []
+                    for comp in model_k.components_:
+                        top_indices = comp.argsort()[::-1][:words_per_topic]
+                        top_words = [vocab[i] for i in top_indices]
+                        topics.append(top_words)
+                elif method == "lsa":
+                    vectorizer = TfidfVectorizer(
+                        stop_words=list(user_stops) if remove_sw else None,
+                        token_pattern=r"(?u)\b\w+\b"
+                    )
+                    X = vectorizer.fit_transform(texts)
+                    vocab = vectorizer.get_feature_names_out()
+                    model_k = TruncatedSVD(n_components=k, random_state=random_state)
+                    model_k.fit(X)
+                    topics = []
+                    for row in model_k.components_:
+                        top_indices = row.argsort()[::-1][:words_per_topic]
+                        top_words = [vocab[i] for i in top_indices]
+                        topics.append(top_words)
+                coherence_model = CoherenceModel(topics=topics, texts=tokenized_texts,
+                                                  dictionary=dictionary, coherence='c_v')
+                score = coherence_model.get_coherence()
+                coherence_scores.append(score)
+            best_index = np.argmax(coherence_scores)
+            best_topic_num = topics_range[best_index]
+            best_coherence = coherence_scores[best_index]
+  
+            # Generate a line plot for coherence scores
+            plt.figure(figsize=(8, 6))
+            plt.plot(topics_range, coherence_scores, marker='o')
+            plt.xlabel("Number of Topics")
+            plt.ylabel("Coherence Score (c_v)")
+            plt.title(f"Coherence Analysis for {method.upper()}")
+            plt.grid(True)
+            buf = io.BytesIO()
+            plt.savefig(buf, format='png')
+            plt.close()
+            buf.seek(0)
+            img_b64 = base64.b64encode(buf.read()).decode("utf-8")
+            coherence_plot = f"data:image/png;base64,{img_b64}"
+  
+            return jsonify({
+                "message": f"{method.upper()} topic modeling completed with coherence analysis.",
+                "topics": topic_labels,
+                "coherence_analysis": {
+                    "coherence_plot": coherence_plot,
+                    "best_topic": best_topic_num,
+                    "best_coherence": best_coherence,
+                    "topics_range": topics_range,
+                    "coherence_scores": coherence_scores
+                }
+            }), 200
+  
+        # --- Return the standard topic modeling results if no coherence analysis is requested ---
         return jsonify({
             "message": f"{method.upper()} topic modeling completed.",
             "topics": topic_labels
         }), 200
+  
     except Exception as e:
         return jsonify({"error": f"Error during topic modeling: {str(e)}"}), 500
 

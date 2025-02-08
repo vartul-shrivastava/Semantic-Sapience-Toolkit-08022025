@@ -1148,6 +1148,21 @@ Zero-Shot Sentiment</button>
           <label for="lda-stopwords"><strong>Remove Stopwords?</strong></label>
           <input type="checkbox" name="stopwords" id="lda-stopwords">
           <label for="lda-stopwords">Yes</label>
+                  <!-- New: Coherence Analysis Options -->
+        <label for="lda-coherence_analysis"><strong>Perform Coherence Analysis?</strong></label>
+        <input type="checkbox" name="coherence_analysis" id="lda-coherence_analysis">
+        <label for="lda-coherence_analysis">Yes</label>
+
+        <!-- These extra parameters are shown only if coherence analysis is enabled.
+             You can add a bit of JS to toggle the display; here we set inline style to hide by default -->
+        <div id="lda-coherence-params" style="display: none; margin-left: 1rem;">
+          <label for="lda-min_topics"><strong>Min Topics</strong></label>
+          <input type="number" name="min_topics" id="lda-min_topics" placeholder="e.g. 2" min="1">
+          <label for="lda-max_topics"><strong>Max Topics</strong></label>
+          <input type="number" name="max_topics" id="lda-max_topics" placeholder="e.g. 10" min="1">
+          <label for="lda-step"><strong>Step</strong></label>
+          <input type="number" name="step" id="lda-step" placeholder="e.g. 1" min="1">
+        </div>
         </div>
         <div class="preview-section">
           <!-- LDA Topic Modeling Results will be rendered here -->
@@ -1184,33 +1199,117 @@ Zero-Shot Sentiment</button>
           <h4>Configuration</h4>
           <label for="nmf-textColumn"><strong>Choose Text Column</strong></label>
           <select name="textColumn" id="nmf-textColumn" required></select>
-
+  
           <label for="nmf-numTopics"><strong>Number of Topics</strong></label>
           <input type="number" name="numTopics" id="nmf-numTopics" placeholder="e.g. 5" min="1" required>
+  
           <label for="nmf-wordsPerTopic"><strong>Words per Topic</strong></label>
           <input type="number" name="wordsPerTopic" id="nmf-wordsPerTopic" placeholder="e.g. 5" min="1" required>
+  
           <label for="nmf-randomState"><strong>Random State</strong></label>
           <input type="number" name="randomState" id="nmf-randomState" placeholder="e.g. 42" min="1" required>
-
-
+  
           <label for="nmf-stopwords"><strong>Remove Stopwords?</strong></label>
           <input type="checkbox" name="stopwords" id="nmf-stopwords">
           <label for="nmf-stopwords">Yes</label>
+  
+          <!-- New: Coherence Analysis Options -->
+          <label for="nmf-coherence_analysis"><strong>Perform Coherence Analysis?</strong></label>
+          <input type="checkbox" name="coherence_analysis" id="nmf-coherence_analysis">
+          <label for="nmf-coherence_analysis">Yes</label>
+  
+          <!-- Coherence Parameters (hidden by default) -->
+          <div id="nmf-coherence-params" style="display: none; margin-left: 1rem;">
+            <label for="nmf-min_topics"><strong>Min Topics</strong></label>
+            <input type="number" name="min_topics" id="nmf-min_topics" placeholder="e.g. 2" min="1">
+            <label for="nmf-max_topics"><strong>Max Topics</strong></label>
+            <input type="number" name="max_topics" id="nmf-max_topics" placeholder="e.g. 10" min="1">
+            <label for="nmf-step"><strong>Step</strong></label>
+            <input type="number" name="step" id="nmf-step" placeholder="e.g. 1" min="1">
+          </div>
         </div>
         <div class="preview-section">
           <!-- NMF Topic Modeling Results will be rendered here -->
           <p>No topic modeling results available.</p>
         </div>
       </div>
-
       <div class="modal-footer">
         <button class="btn run-btn">Run Topic Modeling</button>
         <button class="btn download-btn">Download Results</button>
         <h5 style="margin: 5px 0;">Modal History Cascade</h5>
         <div class="checkpoints-list">
+        </div>
       </div>
     </div>
   </div>
+  
+
+
+  <div class="hidden-template" id="lsaModal">
+    <div class="modal" data-modal-id="lsa" role="dialog" aria-labelledby="lsaModalTitle" aria-modal="true">
+      <div class="modal-header">
+        <h5 id="lsaModalTitle">LSA Topic Modeling</h5>
+        <div class="modal-controls">
+          <button title="Minimize" class="minimize-btn">—</button>
+          <button title="Maximize/Restore" class="maximize-btn">▢</button>
+          <button title="Close" class="close-btn">×</button>
+        </div>
+      </div>
+      <!-- Resize Handles Positioned Outside Header -->
+      <div class="resize-handle nw"></div>
+      <div class="resize-handle ne"></div>
+      <div class="resize-handle sw"></div>
+      <div class="resize-handle se"></div>
+      <div class="modal-body">
+        <div class="form-section">
+          <h4>Configuration</h4>
+          <label for="lsa-textColumn"><strong>Choose Text Column</strong></label>
+          <select name="textColumn" id="lsa-textColumn" required></select>
+  
+          <label for="lsa-numTopics"><strong>Number of Topics</strong></label>
+          <input type="number" name="numTopics" id="lsa-numTopics" placeholder="e.g. 5" min="1" required>
+  
+          <label for="lsa-wordsPerTopic"><strong>Words per Topic</strong></label>
+          <input type="number" name="wordsPerTopic" id="lsa-wordsPerTopic" placeholder="e.g. 5" min="1" required>
+  
+          <label for="lsa-randomState"><strong>Random State</strong></label>
+          <input type="number" name="randomState" id="lsa-randomState" placeholder="e.g. 42" min="1" required>
+  
+          <label for="lsa-stopwords"><strong>Remove Stopwords?</strong></label>
+          <input type="checkbox" name="stopwords" id="lsa-stopwords">
+          <label for="lsa-stopwords">Yes</label>
+  
+          <!-- New: Coherence Analysis Options -->
+          <label for="lsa-coherence_analysis"><strong>Perform Coherence Analysis?</strong></label>
+          <input type="checkbox" name="coherence_analysis" id="lsa-coherence_analysis">
+          <label for="lsa-coherence_analysis">Yes</label>
+  
+          <!-- Coherence Parameters (hidden by default) -->
+          <div id="lsa-coherence-params" style="display: none; margin-left: 1rem;">
+            <label for="lsa-min_topics"><strong>Min Topics</strong></label>
+            <input type="number" name="min_topics" id="lsa-min_topics" placeholder="e.g. 2" min="1">
+            <label for="lsa-max_topics"><strong>Max Topics</strong></label>
+            <input type="number" name="max_topics" id="lsa-max_topics" placeholder="e.g. 10" min="1">
+            <label for="lsa-step"><strong>Step</strong></label>
+            <input type="number" name="step" id="lsa-step" placeholder="e.g. 1" min="1">
+          </div>
+        </div>
+        <div class="preview-section">
+          <!-- LSA Topic Modeling Results will be rendered here -->
+          <p>No topic modeling results available.</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn run-btn">Run Topic Modeling</button>
+        <button class="btn download-btn">Download Results</button>
+        <h5 style="margin: 5px 0;">Modal History Cascade</h5>
+        <div class="checkpoints-list">
+        </div>
+      </div>
+    </div>
+  </div>
+  
+
 
   <div class="hidden-template" id="bertopicModal">
     <div class="modal" data-modal-id="bertopic" role="dialog" aria-labelledby="bertopicModalTitle" aria-modal="true">
@@ -1260,56 +1359,6 @@ Zero-Shot Sentiment</button>
       </div>
     </div>
   </div>
-
-  <div class="hidden-template" id="lsaModal">
-    <div class="modal" data-modal-id="lsa" role="dialog" aria-labelledby="lsaModalTitle" aria-modal="true">
-      <div class="modal-header">
-        <h5 id="lsaModalTitle">LSA Topic Modeling</h5>
-        <div class="modal-controls">
-          <button title="Minimize" class="minimize-btn">—</button>
-          <button title="Maximize/Restore" class="maximize-btn">▢</button>
-          <button title="Close" class="close-btn">×</button>
-        </div>
-      </div>
-      <!-- Resize Handles Positioned Outside Header -->
-      <div class="resize-handle nw"></div>
-      <div class="resize-handle ne"></div>
-      <div class="resize-handle sw"></div>
-      <div class="resize-handle se"></div>
-      <div class="modal-body">
-        <div class="form-section">
-          <h4>Configuration</h4>
-          <label for="lsa-textColumn"><strong>Choose Text Column</strong></label>
-          <select name="textColumn" id="lsa-textColumn" required></select>
-
-          <label for="lsa-numTopics"><strong>Number of Topics</strong></label>
-          <input type="number" name="numTopics" id="lsa-numTopics" placeholder="e.g. 5" min="1" required>
-
-          <label for="lsa-wordsPerTopic"><strong>Words per Topic</strong></label>
-          <input type="number" name="wordsPerTopic" id="lsa-wordsPerTopic" placeholder="e.g. 5" min="1" required>
-
-          <label for="lsa-randomState"><strong>Random State</strong></label>
-          <input type="number" name="randomState" id="lsa-randomState" placeholder="e.g. 42" min="1" required>
-
-          <label for="lsa-stopwords"><strong>Remove Stopwords?</strong></label>
-          <input type="checkbox" name="stopwords" id="lsa-stopwords">
-          <label for="lsa-stopwords">Yes</label>
-        </div>
-        <div class="preview-section">
-          <!-- LSA Topic Modeling Results will be rendered here -->
-          <p>No topic modeling results available.</p>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn run-btn">Run Topic Modeling</button>
-        <button class="btn download-btn">Download Results</button>
-        <h5 style="margin: 5px 0;">Modal History Cascade</h5>
-        <div class="checkpoints-list">
-      </div>
-    </div>
-  </div>
-
   <div class="hidden-template" id="llmbasedModal">
     <div class="modal" data-modal-id="llmbased" role="dialog" aria-labelledby="llmbasedModalTitle" aria-modal="true">
       <div class="modal-header">

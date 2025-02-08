@@ -88,6 +88,33 @@ document.addEventListener('DOMContentLoaded', () => {
     updateDefaultContentVisibility();
   });
 
+
+/**
+ * Attach an event listener to a modal so that when the "coherence_analysis"
+ * checkbox is toggled, the corresponding coherence parameters div is shown or hidden.
+ * This function assumes that the coherence parameters container has an id ending in "-coherence-params".
+ * @param {HTMLElement} modal - The cloned modal element.
+ */
+function attachCoherenceListener(modal) {
+    // Look for a checkbox with name "coherence_analysis"
+    const coherenceCheckbox = modal.querySelector('input[name="coherence_analysis"]');
+    if (!coherenceCheckbox) return; // nothing to do if not present
+
+    // Look for a container whose id ends with "coherence-params"
+    const coherenceParamsDiv = modal.querySelector('div[id$="coherence-params"]');
+    if (!coherenceParamsDiv) return;
+
+    // Set initial display based on the checkbox state
+    coherenceParamsDiv.style.display = coherenceCheckbox.checked ? 'block' : 'none';
+
+    // Attach the event listener to toggle the display
+    coherenceCheckbox.addEventListener('change', () => {
+      coherenceParamsDiv.style.display = coherenceCheckbox.checked ? 'block' : 'none';
+    });
+}
+
+  
+
 function showLoading() {
     document.getElementById('loadingOverlay').style.display = 'flex';
 }
@@ -777,6 +804,7 @@ function openModal(methodId, existingModalId = null) {
         return null;
     }
 
+    // Clone the modal from the template
     const clonedModal = templateEl.querySelector('.modal').cloneNode(true);
     const uniqueId = existingModalId || `${methodId}-${Date.now()}`;
     clonedModal.dataset.modalId = uniqueId;
@@ -785,7 +813,7 @@ function openModal(methodId, existingModalId = null) {
     // Populate the text column select options
     const textColumnSelect = clonedModal.querySelector('select[name="textColumn"]');
     if (textColumnSelect) {
-        textColumnSelect.innerHTML = ''; // Clear existing options
+        textColumnSelect.innerHTML = '';
         const placeholderOption = document.createElement('option');
         placeholderOption.value = '';
         placeholderOption.textContent = '--- Select Column ---';
@@ -796,22 +824,21 @@ function openModal(methodId, existingModalId = null) {
             option.textContent = col;
             textColumnSelect.appendChild(option);
         });
-
-        // If restoring, set the selected value after options are populated
         if (existingModalId && allModals[existingModalId]?.chosenCol) {
             textColumnSelect.value = allModals[existingModalId].chosenCol;
         }
     }
 
-    // Append the modal to the backdrop
+    // Attach the coherence analysis listener
+    attachCoherenceListener(clonedModal);
+
+    // Append the modal to the backdrop and initialize other functionalities
     modalBackdrop.appendChild(clonedModal);
     modalBackdrop.style.display = 'flex';
-
-    // Initialize draggable and resizable functionalities
     initializeModalInteractions(clonedModal);
     randomizeModalPosition(clonedModal);
 
-    // Attach event listeners to control buttons
+    // Attach event listeners to control buttons (close, minimize, maximize)
     const closeButton = clonedModal.querySelector('.close-btn');
     const minimizeButton = clonedModal.querySelector('.minimize-btn');
     const maximizeButton = clonedModal.querySelector('.maximize-btn');
@@ -820,19 +847,13 @@ function openModal(methodId, existingModalId = null) {
     minimizeButton.onclick = () => minimizeModal(clonedModal, methodId);
     maximizeButton.onclick = () => toggleMaximizeModal(clonedModal);
 
-    // Attach event listeners to footer buttons based on method type
     attachModalEventListeners(clonedModal, methodId);
     clonedModal.style.zIndex = zIndexCounter++;
-    // If restoring from existingModalId, add existing checkpoints
-    if (existingModalId && allModals[existingModalId]?.checkpoints) {
-        const checkpoints = allModals[existingModalId].checkpoints;
-        checkpoints.forEach(checkpoint => {
-            addCheckpointToModal(clonedModal, checkpoint);
-        });
-    }
 
+    // (Restore checkpoints etc., if needed)
     return clonedModal;
 }
+
 
 /**
  * Attach event listeners to modal buttons based on method type.
@@ -1533,76 +1554,107 @@ async function generateSemanticWordCloud(modalEl) {
  */
 async function runTopicModeling(modalEl, methodId) {
     try {
-        const fields = getModalFields(modalEl);
-        if (!fields.textColumn) {
-            alert("Please select a text column.");
-            return;
-        }
-
-        const payload = {
-            method: methodId,                     // "lda", "nmf", "bertopic", or "lsa"
-            base64: currentFileBase64,
-            column: fields.textColumn,
-            numTopics: parseInt(fields.numTopics) || 5,
-            wordsPerTopic: parseInt(fields.wordsPerTopic) || 5,
-            randomState: parseInt(fields.randomState) || 42,
-            stopwords: !!fields.stopwords,
-            embeddingModel: fields.embeddingModel || ""
-        };
-
-        showLoading();
-        const response = await fetch("/process/topic_modeling", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
+      const fields = getModalFields(modalEl);
+      if (!fields.textColumn) {
+        alert("Please select a text column.");
+        return;
+      }
+  
+      // Build the basic payload
+      const payload = {
+        method: methodId,                     // "lda", "nmf", "bertopic", or "lsa"
+        base64: currentFileBase64,
+        column: fields.textColumn,
+        numTopics: parseInt(fields.numTopics) || 5,
+        wordsPerTopic: parseInt(fields.wordsPerTopic) || 5,
+        randomState: parseInt(fields.randomState) || 42,
+        stopwords: !!fields.stopwords,
+        embeddingModel: fields.embeddingModel || ""
+      };
+  
+      // If coherence analysis is enabled in the modal, include extra parameters
+      if (fields.coherence_analysis === "on" || fields.coherence_analysis === true) {
+        payload.coherence_analysis = true;
+        payload.min_topics = parseInt(fields.min_topics) || 2;
+        payload.max_topics = parseInt(fields.max_topics) || (parseInt(fields.numTopics) || 5);
+        payload.step = parseInt(fields.step) || 1;
+      }
+  
+      showLoading();
+      const response = await fetch("/process/topic_modeling", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+  
+      const data = await response.json();
+      hideLoading();
+  
+      if (!response.ok) {
+        alert(data.error || "Error running topic modeling.");
+        return;
+      }
+  
+      const previewSection = modalEl.querySelector(".preview-section");
+      previewSection.innerHTML = "";
+  
+      // Display standard topic modeling results
+      if (data.topics && Array.isArray(data.topics) && data.topics.length > 0) {
+        const heading = document.createElement("h3");
+        heading.textContent = "Extracted Topics:";
+        previewSection.appendChild(heading);
+  
+        const list = document.createElement("ul");
+        data.topics.forEach((topic, index) => {
+          const listItem = document.createElement("li");
+          listItem.textContent = `Topic ${index + 1}: ${topic}`;
+          list.appendChild(listItem);
         });
-
-        const data = await response.json();
-        hideLoading();
-
-        if (!response.ok) {
-            alert(data.error || "Error running topic modeling.");
-            return;
-        }
-
-        const previewSection = modalEl.querySelector(".preview-section");
-        previewSection.innerHTML = "";
-
-        if (data.topics && Array.isArray(data.topics) && data.topics.length > 0) {
-            const heading = document.createElement("h3");
-            heading.textContent = "Extracted Topics:";
-            previewSection.appendChild(heading);
-
-            const list = document.createElement("ul");
-            data.topics.forEach((topic, index) => {
-                const listItem = document.createElement("li");
-                listItem.textContent = `Topic ${index + 1}: ${topic}`;
-                list.appendChild(listItem);
-            });
-            previewSection.appendChild(list);
-        } else {
-            const message = document.createElement("p");
-            message.textContent = "No topics were extracted.";
-            previewSection.appendChild(message);
-        }
-
-        // Capture the rendered output as HTML
-        const outputData = previewSection.innerHTML;
-
-        // Create a checkpoint with current config and output data
-        const checkpointConfig = {
-            methodId: methodId,
-            fields: fields
-            // Add any other necessary parameters
-        };
-        createCheckpoint(modalEl, checkpointConfig, outputData);
+        previewSection.appendChild(list);
+      } else {
+        const message = document.createElement("p");
+        message.textContent = "No topics were extracted.";
+        previewSection.appendChild(message);
+      }
+  
+      // If coherence analysis was performed, display the coherence plot and best score
+      if (data.coherence_analysis) {
+        const coherenceDiv = document.createElement("div");
+        coherenceDiv.className = "coherence-analysis";
+        coherenceDiv.style.marginTop = "1rem";
+  
+        const plotHeading = document.createElement("h4");
+        plotHeading.textContent = "Coherence Analysis";
+        coherenceDiv.appendChild(plotHeading);
+  
+        const plotImg = document.createElement("img");
+        plotImg.src = data.coherence_analysis.coherence_plot;
+        plotImg.alt = "Coherence Analysis Plot";
+        plotImg.style.maxWidth = "100%";
+        coherenceDiv.appendChild(plotImg);
+  
+        const bestInfo = document.createElement("p");
+        bestInfo.textContent = `Best Coherence: ${data.coherence_analysis.best_coherence.toFixed(4)} at ${data.coherence_analysis.best_topic} topics.`;
+        coherenceDiv.appendChild(bestInfo);
+  
+        previewSection.appendChild(coherenceDiv);
+      }
+  
+      // Capture the rendered output as HTML for checkpointing
+      const outputData = previewSection.innerHTML;
+      const checkpointConfig = {
+        methodId: methodId,
+        fields: fields
+        // You can include additional parameters if needed
+      };
+      createCheckpoint(modalEl, checkpointConfig, outputData);
     } catch (error) {
-        hideLoading();
-        console.error(error);
-        alert("Error running topic modeling: " + error.message);
+      hideLoading();
+      console.error(error);
+      alert("Error running topic modeling: " + error.message);
     }
-}
-
+  }
+  
 /**
  * Handle downloading topic modeling results.
  * @param {HTMLElement} modalEl - The modal element.
