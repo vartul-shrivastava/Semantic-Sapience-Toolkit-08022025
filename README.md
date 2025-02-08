@@ -1,4 +1,4 @@
-![Semantic-Sapience-VSS Header](app/static/images/SS-head.png "Semantic-Sapience-VSS Header")
+![Semantic-Sapience-VSS Header](app/static/images/SS-header.png "Semantic-Sapience-VSS Header")
 
 ## Features
 - Implements **AES-GCM encryption** to secure project files with customizable session keys.  
