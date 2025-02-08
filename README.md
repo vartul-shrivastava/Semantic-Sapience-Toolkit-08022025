@@ -22,7 +22,7 @@
 ### Setup Instructions
 ```sh
 # Clone the repository
-git clone https://github.com/vartul-shrivastava/Semantic-Sapience-VSS-29012025.git
+git clone https://github.com/vartul-shrivastava/Semantic-Sapience-Toolkit-08022025.git
 cd app
 
 # Install dependencies
