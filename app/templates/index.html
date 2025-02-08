@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Semantic Sapience Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.png') }}">
+</head>
+
+<body><!-- Overlay for re-entering password when decryption fails -->
+  <div id="decryptionOverlay" class="overlay" style="display: none; z-index: 9999;">
+    <div class="overlay-content">
+      <img src="{{ url_for('static', filename='images/SS-dev-logo.svg') }}" alt="Semantic Sapience Logo" class="overlay-logo">
+      <label for="overlayPasswordInput">Re-enter Password. Please <b>enter the correct password to decrypt</b> as current session key cannot decrypt it:</label>
+      <input type="password" id="overlayPasswordInput" />
+      <div class="overlay-buttons">
+        <button id="overlayConfirmBtn">Confirm</button>
+        <button id="overlayCancelBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+    <div id="contextMenu" class="context-menu hidden">
+      <p><b>Quick Menu for Modal Adding</b></p>
+      <ul>
+        <li data-modal-type="tfidf" onclick="invokeMethod('tfidf')">Add TF-IDF Modal</li>
+        <li data-modal-type="freq" onclick="invokeMethod('freq')">Add Frequency Modal</li>
+        <li data-modal-type="collocation" onclick="invokeMethod('collocation')">Add Collocation Modal</li>
+        <li data-modal-type="semanticwc" onclick="invokeMethod('semanticwc')">Add Semantic Word Cloud Modal</li>
+        <li data-modal-type="lda" onclick="invokeMethod('lda')">Add LDA Modal</li>
+        <li data-modal-type="nmf" onclick="invokeMethod('nmf')">Add NMF Modal</li>
+        <li data-modal-type="bertopic" onclick="invokeMethod('bertopic')">Add BERTopic Modal</li>
+        <li data-modal-type="lsa" onclick="invokeMethod('lsa')">Add LSA Modal</li>
+        <li data-modal-type="rulebasedsa" onclick="invokeMethod('rulebasedsa')">Add Rule-Based Sentiment Modal</li>
+        <li data-modal-type="dlbasedsa" onclick="invokeMethod('dlbasedsa')">Add DL-Based Sentiment Modal</li>
+        <li data-modal-type="absa" onclick="invokeMethod('absa')">Add ABSA Modal</li>
+        <li data-modal-type="zeroshotSentiment" onclick="invokeMethod('zeroshotSentiment')">Add Zero-Shot Sentiment Modal</li>
+      </ul>
+    </div>
+  
+    <div id="welcomeOverlay" class="welcome-overlay">
+      <div class="overlay-content">
+        <div class="supp-wrap" style="display: flex;">
+          <img src="{{ url_for('static', filename='images/SS-dev-logo.svg') }}" alt="Semantic Sapience Logo" class="overlay-logo">
+        </div>
+          <p>Before you get started, please set a session password to secure your project files.</p>
+          <p>By default, <b><code>semanticsapience</code></b> is the session password (It is recommended to change it)</p>
+          <input type="password" id="sessionPassword" placeholder="Enter Session Password" value="semanticsapience" required>
+          <p>This password will be used to encrypt and decrypt your project files during this session.</p>
+        <p>
+          The platform supports a wide range of features, each tailored to enhance your data analysis journey. Whether you are uncovering hidden patterns through advanced topic modeling techniques like LDA, BERTopic, NMF, and LSA, or creating visually impactful word clouds using methods like TF-IDF, Frequency Analysis, Collocation, and Semantic Analysis, Semantic Sapience ensures a seamless and powerful experience. For sentiment analysis, the tool offers multiple approaches, including rule-based analysis, deep learning models, aspect-based sentiment analysis (ABSA), and zero-shot sentiment analysis.
+        </p>
+        <button class="close-overlay-btn" onclick="closeWelcomeOverlay()">Get Started</button>
+        <button id="checkAIDependencyBtn" class="close-overlay-btn">Check AI Dependency</button>
+      </div>
+    </div>
+    
+  <!-- ===== Loading Overlay ===== -->
+  <div id="loadingOverlay" style="display: none;">
+    <img src="{{ url_for('static', filename='images/SS-dev-gray-logo.svg') }}" alt="Semantic Sapience-" style="width: 50%; margin: 20px;">
+    <div class="load-wrap" style="display: flex; align-items: center; gap: 0.5rem;">
+      <div class="spinner"></div>
+      <p style="padding-bottom: 15px;">Your Request is under process...
+        <br>(Kindly refrain any additional request during processing)</p>
+    </div>
+  </div>
+
+
+  <!-- Main Content -->
+  <main>
+    <!-- Top Navigation -->
+    <header class="top-nav">
+      <div class="brand-area">
+        <img src="{{ url_for('static', filename='images/SS-page-logo.svg') }}" alt="Semantic Sapience-" style="width: 150px;margin:0 0 0 auto">
+      </div>
+      <nav class="nav-links">
+        <!-- Hidden file input for CSV/XLSX -->
+        <input type="file" accept=".csv, .xlsx" id="fileInput" style="display:none;" />
+        <a href="javascript:void(0)" onclick="triggerFileUpload()">
+          
+<svg class="hoverSVG"
+width="67.773743mm"
+height="68.201164mm"
+viewBox="0 0 67.773743 68.201164"
+version="1.1"
+id="svg1"
+xml:space="preserve"
+inkscape:export-filename="SemanticSapience--DevLogo.svg"
+inkscape:export-xdpi="96"
+inkscape:export-ydpi="96"
+xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+xmlns="http://www.w3.org/2000/svg"
+xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
+  id="namedview1"
+  pagecolor="#ffffff"
+  bordercolor="#000000"
+  borderopacity="0.25"
+  inkscape:showpageshadow="2"
+  inkscape:pageopacity="0.0"
+  inkscape:pagecheckerboard="0"
+  inkscape:deskcolor="#d1d1d1"
+  inkscape:document-units="mm" /><defs
+  id="defs1" /><g
+  inkscape:label="Layer 1"
+  inkscape:groupmode="layer"
+  id="layer1"
+  transform="translate(-35.035565,-171.93217)"><path
+    style="fill:#074fb6;fill-opacity:1;stroke:none"
+    d="m 44.316191,194.31478 c -2.54771,0 -6.20429,-0.70361 -8.12611,1.36345 -1.40059,1.50644 -1.13431,3.61888 -1.13431,5.51572 v 12.7 c 0,1.89684 -0.26628,4.00928 1.13431,5.51572 1.92182,2.06705 5.5784,1.36345 8.12611,1.36345 v 12.96458 c 0,1.65945 -0.38206,3.90825 0.88711,5.21293 1.83196,1.88321 7.24697,0.87249 9.69622,0.87249 h 27.51667 c 2.47193,0 8.68006,1.1112 10.44549,-0.87249 1.11609,-1.25406 0.66701,-3.66233 0.66701,-5.21293 v -12.96458 c 2.5477,0 6.20428,0.7036 8.126099,-1.36345 1.4006,-1.50644 1.13431,-3.61888 1.13431,-5.51572 v -12.7 c 0,-1.89684 0.26629,-4.00928 -1.13431,-5.51572 -1.921819,-2.06706 -5.578399,-1.36345 -8.126099,-1.36345 0,-1.97785 0.49939,-4.75359 -0.22345,-6.61458 -1.38279,-3.56006 -5.97043,-7.19471 -8.49317,-10.05416 -1.39817,-1.58478 -3.24462,-4.77255 -5.33665,-5.41842 -1.85143,-0.57159 -4.39189,-0.13783 -6.31965,-0.13783 h -12.96458 -10.58334 c -1.3114,0 -3.08533,-0.29385 -4.14017,0.667 -1.51059,1.376 -1.15149,4.11976 -1.15149,5.94758 v 15.61041 m 46.56666,-4.7625 v 4.7625 h -43.92083 v -14.02291 c 0,-1.25962 -0.52361,-4.07401 0.30419,-5.10187 0.9533,-1.1837 5.41887,-0.45438 6.83956,-0.45438 h 17.19792 c 1.46094,0 4.982,-0.64469 6.1602,0.30419 0.83185,0.66993 0.45438,2.72371 0.45438,3.66456 0,2.51216 -1.01153,7.83086 0.30419,9.99704 0.67349,1.10883 2.29949,0.85078 3.39998,0.85087 h 9.26041 m -32.01458,12.96459 c -1.8289,-0.57318 -3.7094,-0.97437 -5.55625,-0.21021 -3.26318,1.35018 -4.44612,5.80805 -2.45359,8.67595 1.11179,1.60024 2.87834,2.54757 4.83484,2.51232 0.85176,-0.0153 1.98686,-0.51145 2.80409,-0.17455 0.97079,0.40022 0.87562,2.10036 0.90008,2.95482 -3.56546,0.47276 -7.12379,1.05659 -10.31783,-1.09695 -4.59201,-3.09611 -4.55755,-11.19299 -0.2489,-14.52354 2.88741,-2.23194 12.25618,-4.21586 10.03756,1.86216 m 14.2875,-3.175 c -0.11987,0.83034 -0.20123,2.60247 -1.1602,2.92606 -1.27596,0.43056 -5.53659,-1.69045 -5.53659,1.30815 0,2.30233 5.67932,3.22778 6.83432,5.29375 4.07395,7.2871 -7.04042,8.80505 -11.51461,6.8762 l 0.79375,-3.175 c 0.98589,0.18233 1.92451,0.53455 2.91041,0.71982 1.58784,0.29838 5.64121,-0.38103 3.60859,-2.79596 -1.858,-2.20747 -5.3151,-1.80185 -6.62778,-4.80391 -2.95844,-6.76585 6.56634,-7.64809 10.69211,-6.34911 m 6.61458,-0.52917 3.43959,13.49375 h 0.52916 l 2.49561,-9.78958 1.36712,-3.39998 4.07477,-0.30419 -4.23333,12.7 -1.98254,4.72289 -4.63204,0.30419 -5.55625,-17.72708 h 4.49791 m 11.1125,21.96042 v 15.875 h -43.92083 v -15.875 z"
+    id="path1" /></g></svg>
+       <p class="nav-heads">Upload CSV/XLSX</p>
+          <p style="font-size: 0.6rem;">Kindly ensure text-columns <br> are properly cleansed for processing</p>
+        </a>
+        <!-- Hidden file input for project import (.lsp) -->
+        <input type="file" accept=".ssproj" id="importLspInput" style="display:none;" />
+        <a href="javascript:void(0)" onclick="triggerProjectImport()">
+          
+<svg class="hoverSVG"
+width="80.124245mm"
+height="85.197319mm"
+viewBox="0 0 80.124245 85.197319"
+version="1.1"
+id="svg1"
+xml:space="preserve"
+inkscape:export-filename="SemanticSapience--DevLogo.svg"
+inkscape:export-xdpi="96"
+inkscape:export-ydpi="96"
+xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+xmlns="http://www.w3.org/2000/svg"
+xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
+  id="namedview1"
+  pagecolor="#ffffff"
+  bordercolor="#000000"
+  borderopacity="0.25"
+  inkscape:showpageshadow="2"
+  inkscape:pageopacity="0.0"
+  inkscape:pagecheckerboard="0"
+  inkscape:deskcolor="#d1d1d1"
+  inkscape:document-units="mm" /><defs
+  id="defs1" /><g
+  inkscape:label="Layer 1"
+  inkscape:groupmode="layer"
+  id="layer1"
+  transform="translate(-109.53196,-157.89106)"><path
+    style="fill:#074fb6;fill-opacity:1;stroke:none"
+    d="m 130.99388,162.79607 h 26.45834 v 19.05 c 0,1.987 -0.71841,5.75128 0.667,7.35121 1.30815,1.51069 4.67637,0.85088 6.47675,0.85088 h 14.2875 c 1.42782,0 4.22577,-0.531 5.44716,0.30418 0.8554,0.58492 0.63786,1.98043 0.63825,2.87082 v 7.93749 26.72292 c 0,2.36152 1.04016,7.97907 -0.30418,9.94508 -0.84808,1.24024 -4.20115,0.63825 -5.51665,0.63825 h -16.13958 -23.8125 c -1.63942,0 -6.88453,0.84372 -7.8979,-0.63825 -0.8966,-1.31122 -0.30419,-4.43696 -0.30419,-5.97633 0,-5.05261 0.42604,-10.31522 -0.0333,-15.3458 -0.20434,-2.23761 -3.1,-4.09066 -4.24109,-1.31278 -0.71882,1.74991 -0.22348,4.47088 -0.22348,6.33983 v 14.55208 c 0,1.72184 -0.68554,5.2857 1.09974,6.3104 2.35951,1.35428 7.84061,0.30419 10.54192,0.30419 h 26.72292 18.25625 c 2.06755,0 5.372,0.70931 6.1088,-1.85321 0.98222,-3.41607 -0.0234,-8.56454 -0.0234,-12.16971 v -27.51667 c 0,-3.26233 -0.0402,-6.52754 0.003,-9.78958 0.019,-1.45232 0.38794,-3.12502 -0.23141,-4.49791 -1.18348,-2.62339 -4.37704,-4.87048 -6.38573,-6.87917 l -14.2875,-14.2875 c -2.18271,-2.18272 -4.77469,-5.93778 -7.67291,-7.12031 -3.36567,-1.37325 -9.07811,-0.28802 -12.7,-0.28802 h -14.81667 c -1.60661,0 -4.36965,-0.52419 -5.71335,0.52385 -1.87445,1.46201 -0.90123,6.84864 -0.90123,9.00115 v 17.99166 c 0,2.2007 -0.64048,5.60759 0.22348,7.65332 0.79847,1.89068 3.43488,1.57402 4.04551,-0.25329 0.89142,-2.66758 0.22892,-6.45592 0.22892,-9.25211 v -8.46667 -12.7 m 31.22084,3.43959 12.7,12.43541 6.35,6.87917 H 161.9506 v -12.96458 l 0.26459,-6.35 m -15.08125,33.60208 c -10.96737,0 -22.41969,-0.95849 -33.3375,0.0333 -4.0043,0.36378 -5.8392,5.65615 -2.61181,8.26898 2.33795,1.89276 7.18157,0.95809 10.02014,0.95809 h 16.93333 c 2.91938,0 6.13851,-0.37993 8.99584,0.26459 -1.8974,1.73164 -3.8728,3.38842 -5.82084,5.06332 -1.30797,1.12458 -2.86197,2.22516 -3.42692,3.93251 -1.05331,3.18324 1.58793,6.67566 5.01442,6.20097 2.41853,-0.33505 4.34616,-2.60203 6.08542,-4.12908 3.85696,-3.38637 7.74356,-6.74414 11.64167,-10.08312 1.83182,-1.56909 4.0199,-3.10159 4.09678,-5.7471 0.0796,-2.7395 -2.22844,-4.33641 -4.09678,-5.93336 -3.90387,-3.3368 -7.75406,-6.73625 -11.64167,-10.09183 -1.66704,-1.43891 -3.54056,-3.65218 -5.82083,-4.01227 -5.48846,-0.86671 -6.83895,5.39789 -3.43659,8.63002 2.38278,2.26357 5.29177,4.12229 7.40534,6.64494 z"
+    id="path2"
+    inkscape:export-filename="exportLogo.svg"
+    inkscape:export-xdpi="96"
+    inkscape:export-ydpi="96" /></g></svg>
+          <p class="nav-heads">Import Project</p>
+          <p style="font-size: 0.6rem;">Only .ssproj project files are rendered</p>
+        </a>
+        <a href="javascript:void(0)" onclick="exportProject()">
+         
+<svg class="hoverSVG"
+width="85.142647mm"
+height="83.263718mm"
+viewBox="0 0 85.142647 83.263718"
+version="1.1"
+id="svg1"
+xml:space="preserve"
+inkscape:export-filename="SemanticSapience--DevLogo.svg"
+inkscape:export-xdpi="96"
+inkscape:export-ydpi="96"
+xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+xmlns="http://www.w3.org/2000/svg"
+xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
+  id="namedview1"
+  pagecolor="#ffffff"
+  bordercolor="#000000"
+  borderopacity="0.25"
+  inkscape:showpageshadow="2"
+  inkscape:pageopacity="0.0"
+  inkscape:pagecheckerboard="0"
+  inkscape:deskcolor="#d1d1d1"
+  inkscape:document-units="mm" /><defs
+  id="defs1" /><g
+  inkscape:label="Layer 1"
+  inkscape:groupmode="layer"
+  id="layer1"
+  transform="translate(-118.3838,-55.826228)"><path
+    style="fill:#074fb6;fill-opacity:1;stroke:none;stroke-width:0.528445"
+    d="m 146.81612,63.084963 v 18.176291 c 0,2.166927 -0.5993,5.304986 1.13618,6.959052 1.6726,1.594141 4.85702,1.010558 6.97326,1.010558 h 17.89667 c 0,2.103031 -0.32223,4.504102 0.0703,6.571426 0.58723,3.092457 4.91864,3.826901 6.50081,1.11709 0.66387,-1.137037 0.55956,-2.509074 0.55956,-3.773627 0,-2.674373 0.56703,-6.104591 -0.25321,-8.668686 -0.51356,-1.605429 -2.36457,-2.897411 -3.52186,-4.054723 -2.63488,-2.63486 -5.19584,-5.334725 -7.8298,-7.969593 L 157.5821,61.686777 c -1.62984,-1.629829 -3.31852,-3.946036 -5.31308,-5.115285 -1.98434,-1.163272 -5.05879,-0.617239 -7.27051,-0.617239 h -10.48633 c -3.31728,0 -6.72331,0.03218 -9.64741,1.829184 -6.34668,3.900235 -6.43161,10.264608 -6.43161,16.906383 v 21.11247 23.62918 c 0,4.29529 -0.49946,8.96558 1.67935,12.86321 3.58912,6.42057 9.98082,6.71125 16.49693,6.71125 h 22.65046 c 4.36232,0 9.2125,0.57922 13.28268,-1.30407 6.32261,-2.92551 7.41034,-9.11864 7.41034,-15.33422 0,-2.72915 0.13755,-7.96066 -4.19452,-7.05262 -2.70894,0.56781 -2.93617,2.94424 -2.93617,5.235 0,3.52502 0.6703,7.5103 -2.37691,10.01434 -2.53479,2.08294 -6.87428,1.31087 -9.92705,1.31087 h -23.62924 c -3.35281,0 -7.26801,0.62802 -9.76961,-2.09773 -1.56941,-1.71 -1.55561,-3.83392 -1.55561,-6.01168 V 115.23693 78.884359 71.61385 c 0,-2.414678 -0.0593,-4.681217 1.69532,-6.569964 1.8783,-2.021834 4.42412,-1.958923 6.97338,-1.958923 h 12.58357 m 7.27054,5.173257 9.22796,9.227953 c 1.3803,1.380324 3.45435,2.862336 4.33434,4.61399 H 153.9468 v -9.507596 l 0.13987,-4.334347 m 37.1915,35.09423 h -34.25533 c -3.13211,0 -10.19126,-1.23578 -10.18987,3.63524 0.002,4.80098 7.12741,3.49546 10.18987,3.49546 h 34.25533 c -1.60859,2.20973 -3.93998,4.07978 -5.87234,6.01215 -1.0751,1.0751 -2.63362,2.21736 -2.99514,3.77508 -0.6426,2.76883 1.84064,5.04043 4.53312,4.26078 1.72856,-0.50052 3.10614,-2.47331 4.33436,-3.70151 l 9.08813,-9.08815 c 1.30309,-1.3031 3.2678,-2.84813 3.15555,-4.89363 -0.11274,-2.05437 -1.95729,-3.41573 -3.29534,-4.75378 l -9.08816,-9.088154 c -1.23477,-1.234772 -2.58768,-3.16541 -4.33436,-3.658359 -2.79691,-0.789363 -5.17669,1.954815 -4.29738,4.637077 0.57978,1.768539 2.6033,3.19956 3.87793,4.474173 z"
+    id="path3" /></g></svg>
+          <p class="nav-heads">Export Project</p>
+          <p style="font-size: 0.6rem;">The exported file is <br> encrypted using the session key</p>
+        </a>
+
+        <div class="dataset-stats">
+          <h3>Dataset Statistics</h3>
+          <div id="statsCardsWrapper"><p style="font-size: 0.7rem; color: #064bb3;">No data uploaded.</p></div>
+        </div>
+      </nav>
+    </header>
+
+    <!-- Left Section -->
+    <section class="left-section">
+      <!-- Large Display (Houses the modal backdrop) -->
+      <div class="large-display">
+          <!-- Default Content -->
+  <div id="defaultContent" class="default-content">
+    <img src="{{ url_for('static', filename='images/SS-dev-gray-logo.svg') }}" alt="Default Display Image" class="default-image">
+    <p class="default-description">
+      Welcome to Semantic Sapience- Dashboard! Select or create a modal to begin your analysis. <br> Import the .ssproj project file or upload CSV/XLSX to defreeze the modal creation mechanism.
+    </p>  
+  </div>
+        <!-- Modal Backdrop -->
+        <div class="modal-backdrop" id="modalBackdrop"></div>
+        <button class="toggle-fullscreen-btn">Toggle Fullscreen</button>
+      </div>
+      <div class="system-tray-section">
+        <div class="add-desc" style="display: flex;">
+          <h3>System Tray</h3>
+          <p style="margin-left: 10px;font-size: 0.7rem;">This section consists of all the minimized modals. <br> Click to invoke and present on the playground.</p>
+        </div>
+
+        <div id="systemTrayLinks">No minimized modals.</div>
+      </div>
+    </section>
+
+    <!-- Right Section -->
+    <aside class="right-section">
+      <h5>New Instance Instantiation Menu</h5>
+      <p>Click below to launch new modals for analysis:</p>
+
+      <div class="instantiation-menu">
+        <!-- Topic Modeling -->
+        <p style="margin:10px 0;">Topic Modeling Modals</p>
+        <br>
+        <div class="wrapper-btn" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+          <button class="instantiation-btn" onclick="invokeMethod('lda')">
+            <svg
+               width="58.256847mm"
+               height="60.830791mm"
+               viewBox="0 0 58.256847 60.830791"
+               version="1.1"
+               id="svg1"
+               xml:space="preserve"
+               inkscape:export-filename="SemanticSapience--DevLogo.svg"
+               inkscape:export-xdpi="96"
+               inkscape:export-ydpi="96"
+               xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+               xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+               xmlns:xlink="http://www.w3.org/1999/xlink"
+               xmlns="http://www.w3.org/2000/svg"
+               xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
+                 id="namedview1"
+                 pagecolor="#ffffff"
+                 bordercolor="#000000"
+                 borderopacity="0.25"
+                 inkscape:showpageshadow="2"
+                 inkscape:pageopacity="0.0"
+                 inkscape:pagecheckerboard="0"
+                 inkscape:deskcolor="#d1d1d1"
+                 inkscape:document-units="mm" /><defs
+                 id="defs1"><linearGradient
+                   id="linearGradient11"
+                   inkscape:collect="always"><stop
+                     style="stop-color:#064bb3;stop-opacity:1"
+                     offset="0"
+                     id="stop11" /><stop
+                     style="stop-color:#040404;stop-opacity:0;"
+                     offset="1"
+                     id="stop12" /></linearGradient><linearGradient
+                   inkscape:collect="always"
+                   xlink:href="#linearGradient11"
+                   id="linearGradient12"
+                   x1="3.8223939"
+                   y1="128.81467"
+                   x2="67.656372"
+                   y2="189.59073"
+                   gradientUnits="userSpaceOnUse"
+                   gradientTransform="matrix(0.48168406,0,0,0.48168406,43.364813,38.094135)" /></defs><g
+                 inkscape:label="Layer 1"
+                 inkscape:groupmode="layer"
+                 id="layer1"
+                 transform="translate(-25.407979,-76.82694)"><path
+                   style="fill:url(#linearGradient12);fill-opacity:1;stroke:none;stroke-width:0.481684"
+                   d="m 64.430511,102.65688 c 2.13112,-1.00867 4.078482,-2.877806 5.989944,-4.260813 0.66983,-0.484646 1.480316,-1.36345 2.29402,-1.572462 0.730474,-0.18764 2.03461,0.801402 2.803801,0.982669 2.240202,0.527926 4.793021,-0.207206 6.346809,-1.905359 4.488052,-4.905037 -0.375304,-12.579182 -6.729145,-10.880552 -2.66328,0.712 -4.506714,3.213563 -4.70075,5.911519 -0.05753,0.799918 0.519053,2.065398 0.195626,2.775314 -0.243848,0.535237 -1.029263,0.930006 -1.48482,1.269733 -1.18227,0.881675 -2.368942,1.760888 -3.568489,2.618869 -0.768638,0.549774 -2.196595,2.143431 -3.186123,2.100508 -1.168643,-0.05069 -2.424899,-1.375285 -3.695924,-1.580926 -0.576407,-0.09326 -1.479213,0.151875 -1.947424,-0.265412 -0.494781,-0.440972 -0.600636,-1.464671 -0.78069,-2.075158 -0.450736,-1.528249 -0.913943,-3.055625 -1.350061,-4.588041 -0.157316,-0.552766 -0.540326,-1.3286 -0.439242,-1.90821 0.131448,-0.753715 1.316477,-1.431132 1.770898,-2.042697 0.91098,-1.226003 1.293558,-2.824378 1.209176,-4.333053 -0.261882,-4.682189 -5.595824,-7.47024 -9.677866,-5.361255 -3.766021,1.945715 -4.627576,6.981748 -1.939955,10.175703 0.813161,0.966355 1.887359,1.608444 3.086965,1.971359 0.573886,0.173619 1.599574,0.105128 2.026804,0.552704 0.408757,0.428227 0.504209,1.286082 0.674563,1.837572 0.469843,1.521028 0.857053,3.066463 1.32392,4.58804 0.178143,0.580589 0.670815,1.545575 0.462432,2.150628 -0.195896,0.568792 -0.991421,0.954616 -1.41439,1.34685 -0.568068,0.52679 -0.913528,1.29854 -1.483898,1.79379 -0.455333,0.39537 -1.211386,0.0317 -1.716876,-0.0995 -1.488916,-0.38667 -2.971062,-0.79509 -4.460596,-1.18002 -1.42836,-0.36911 -3.893715,-0.54446 -5.070304,-1.441673 -0.59486,-0.453607 -0.550271,-1.642577 -0.783555,-2.315162 -0.376855,-1.08652 -1.14374,-2.11138 -2.049095,-2.81408 -4.677833,-3.630751 -10.886871,0.109482 -10.700543,5.745325 0.148946,4.50514 5.187426,7.18552 9.172525,5.52023 0.834081,-0.34854 1.558821,-0.87982 2.170589,-1.5428 0.32852,-0.35602 0.643236,-1.00762 1.158943,-1.103 1.257726,-0.23263 3.47491,0.82402 4.699539,1.18036 1.515301,0.44093 3.066937,0.77427 4.58804,1.20098 0.542467,0.15218 1.433376,0.22273 1.820263,0.67268 0.454756,0.52888 0.335879,1.91528 0.549788,2.61041 0.155041,0.50382 0.633401,1.1287 0.612185,1.65679 -0.03103,0.77254 -1.327362,1.65871 -1.835225,2.16657 l -4.205704,4.20571 c -0.550733,0.55073 -1.188762,1.46576 -1.911683,1.78367 -0.679268,0.29873 -2.127468,-0.81581 -2.803803,-1.06651 -1.703257,-0.63135 -3.698286,-0.70633 -5.48016,-0.4159 -8.130652,1.3252 -11.388264,11.94869 -5.709926,17.78137 5.948542,6.11024 16.517725,2.83507 18.112611,-5.46552 0.340217,-1.77067 0.103439,-3.79426 -0.488752,-5.48016 -0.236377,-0.67294 -1.322305,-2.00037 -1.058688,-2.67636 0.281741,-0.72246 1.223603,-1.37342 1.761867,-1.91168 l 4.333149,-4.33315 c 0.505251,-0.50525 1.288205,-1.65436 2.039129,-1.75156 0.98306,-0.12724 2.352048,0.91797 3.44103,0.97889 1.085027,0.0607 2.1482,-0.029 3.186138,-0.36274 0.520435,-0.16732 1.206267,-0.66741 1.755753,-0.63078 0.47929,0.0319 0.970294,0.73064 1.295368,1.04277 0.953138,0.91517 1.849696,1.8891 2.803806,2.80378 0.322806,0.30947 1.024509,0.81324 1.088645,1.27977 0.11466,0.83405 -0.976176,2.24438 -1.156235,3.13959 -0.696679,3.46375 0.411195,7.14613 3.2613,9.33218 7.137041,5.47416 17.503223,-1.71241 14.494475,-10.35174 -1.417663,-4.0707 -5.531722,-6.55272 -9.77899,-6.07849 -1.009962,0.11276 -2.008387,0.33018 -2.931245,0.76968 -0.414629,0.19746 -0.964081,0.69987 -1.44104,0.45247 -1.38172,-0.7167 -2.680292,-2.62416 -3.784558,-3.72507 -0.347699,-0.34664 -1.10389,-0.85554 -1.129944,-1.38785 -0.04258,-0.87005 0.784095,-1.99734 0.940055,-2.90274 0.279959,-1.62532 -0.139896,-3.05027 -0.574457,-4.58804 z"
+                   id="path11" /></g></svg>
+            Create LDA</button>
+          <button class="instantiation-btn" onclick="invokeMethod('nmf')">
+            <svg
+               width="58.256847mm"
+               height="60.830791mm"
+               viewBox="0 0 58.256847 60.830791"
+               version="1.1"
+               id="svg1"
+               xml:space="preserve"
+               inkscape:export-filename="SemanticSapience--DevLogo.svg"
+               inkscape:export-xdpi="96"
+               inkscape:export-ydpi="96"
+               xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+               xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+               xmlns:xlink="http://www.w3.org/1999/xlink"
+               xmlns="http://www.w3.org/2000/svg"
+               xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
+                 id="namedview1"
+                 pagecolor="#ffffff"
+                 bordercolor="#000000"
+                 borderopacity="0.25"
+                 inkscape:showpageshadow="2"
+                 inkscape:pageopacity="0.0"
+                 inkscape:pagecheckerboard="0"
+                 inkscape:deskcolor="#d1d1d1"
+                 inkscape:document-units="mm" /><defs
+                 id="defs1"><linearGradient
+                   id="linearGradient11"
+                   inkscape:collect="always"><stop
+                     style="stop-color:#064bb3;stop-opacity:1"
+                     offset="0"
+                     id="stop11" /><stop
+                     style="stop-color:#040404;stop-opacity:0;"
+                     offset="1"
+                     id="stop12" /></linearGradient><linearGradient
+                   inkscape:collect="always"
+                   xlink:href="#linearGradient11"
+                   id="linearGradient12"
+                   x1="3.8223939"
+                   y1="128.81467"
+                   x2="67.656372"
+                   y2="189.59073"
+                   gradientUnits="userSpaceOnUse"
+                   gradientTransform="matrix(0.48168406,0,0,0.48168406,43.364813,38.094135)" /></defs><g
+                 inkscape:label="Layer 1"
+                 inkscape:groupmode="layer"
+                 id="layer1"
+                 transform="translate(-25.407979,-76.82694)"><path
+                   style="fill:url(#linearGradient12);fill-opacity:1;stroke:none;stroke-width:0.481684"
+                   d="m 64.430511,102.65688 c 2.13112,-1.00867 4.078482,-2.877806 5.989944,-4.260813 0.66983,-0.484646 1.480316,-1.36345 2.29402,-1.572462 0.730474,-0.18764 2.03461,0.801402 2.803801,0.982669 2.240202,0.527926 4.793021,-0.207206 6.346809,-1.905359 4.488052,-4.905037 -0.375304,-12.579182 -6.729145,-10.880552 -2.66328,0.712 -4.506714,3.213563 -4.70075,5.911519 -0.05753,0.799918 0.519053,2.065398 0.195626,2.775314 -0.243848,0.535237 -1.029263,0.930006 -1.48482,1.269733 -1.18227,0.881675 -2.368942,1.760888 -3.568489,2.618869 -0.768638,0.549774 -2.196595,2.143431 -3.186123,2.100508 -1.168643,-0.05069 -2.424899,-1.375285 -3.695924,-1.580926 -0.576407,-0.09326 -1.479213,0.151875 -1.947424,-0.265412 -0.494781,-0.440972 -0.600636,-1.464671 -0.78069,-2.075158 -0.450736,-1.528249 -0.913943,-3.055625 -1.350061,-4.588041 -0.157316,-0.552766 -0.540326,-1.3286 -0.439242,-1.90821 0.131448,-0.753715 1.316477,-1.431132 1.770898,-2.042697 0.91098,-1.226003 1.293558,-2.824378 1.209176,-4.333053 -0.261882,-4.682189 -5.595824,-7.47024 -9.677866,-5.361255 -3.766021,1.945715 -4.627576,6.981748 -1.939955,10.175703 0.813161,0.966355 1.887359,1.608444 3.086965,1.971359 0.573886,0.173619 1.599574,0.105128 2.026804,0.552704 0.408757,0.428227 0.504209,1.286082 0.674563,1.837572 0.469843,1.521028 0.857053,3.066463 1.32392,4.58804 0.178143,0.580589 0.670815,1.545575 0.462432,2.150628 -0.195896,0.568792 -0.991421,0.954616 -1.41439,1.34685 -0.568068,0.52679 -0.913528,1.29854 -1.483898,1.79379 -0.455333,0.39537 -1.211386,0.0317 -1.716876,-0.0995 -1.488916,-0.38667 -2.971062,-0.79509 -4.460596,-1.18002 -1.42836,-0.36911 -3.893715,-0.54446 -5.070304,-1.441673 -0.59486,-0.453607 -0.550271,-1.642577 -0.783555,-2.315162 -0.376855,-1.08652 -1.14374,-2.11138 -2.049095,-2.81408 -4.677833,-3.630751 -10.886871,0.109482 -10.700543,5.745325 0.148946,4.50514 5.187426,7.18552 9.172525,5.52023 0.834081,-0.34854 1.558821,-0.87982 2.170589,-1.5428 0.32852,-0.35602 0.643236,-1.00762 1.158943,-1.103 1.257726,-0.23263 3.47491,0.82402 4.699539,1.18036 1.515301,0.44093 3.066937,0.77427 4.58804,1.20098 0.542467,0.15218 1.433376,0.22273 1.820263,0.67268 0.454756,0.52888 0.335879,1.91528 0.549788,2.61041 0.155041,0.50382 0.633401,1.1287 0.612185,1.65679 -0.03103,0.77254 -1.327362,1.65871 -1.835225,2.16657 l -4.205704,4.20571 c -0.550733,0.55073 -1.188762,1.46576 -1.911683,1.78367 -0.679268,0.29873 -2.127468,-0.81581 -2.803803,-1.06651 -1.703257,-0.63135 -3.698286,-0.70633 -5.48016,-0.4159 -8.130652,1.3252 -11.388264,11.94869 -5.709926,17.78137 5.948542,6.11024 16.517725,2.83507 18.112611,-5.46552 0.340217,-1.77067 0.103439,-3.79426 -0.488752,-5.48016 -0.236377,-0.67294 -1.322305,-2.00037 -1.058688,-2.67636 0.281741,-0.72246 1.223603,-1.37342 1.761867,-1.91168 l 4.333149,-4.33315 c 0.505251,-0.50525 1.288205,-1.65436 2.039129,-1.75156 0.98306,-0.12724 2.352048,0.91797 3.44103,0.97889 1.085027,0.0607 2.1482,-0.029 3.186138,-0.36274 0.520435,-0.16732 1.206267,-0.66741 1.755753,-0.63078 0.47929,0.0319 0.970294,0.73064 1.295368,1.04277 0.953138,0.91517 1.849696,1.8891 2.803806,2.80378 0.322806,0.30947 1.024509,0.81324 1.088645,1.27977 0.11466,0.83405 -0.976176,2.24438 -1.156235,3.13959 -0.696679,3.46375 0.411195,7.14613 3.2613,9.33218 7.137041,5.47416 17.503223,-1.71241 14.494475,-10.35174 -1.417663,-4.0707 -5.531722,-6.55272 -9.77899,-6.07849 -1.009962,0.11276 -2.008387,0.33018 -2.931245,0.76968 -0.414629,0.19746 -0.964081,0.69987 -1.44104,0.45247 -1.38172,-0.7167 -2.680292,-2.62416 -3.784558,-3.72507 -0.347699,-0.34664 -1.10389,-0.85554 -1.129944,-1.38785 -0.04258,-0.87005 0.784095,-1.99734 0.940055,-2.90274 0.279959,-1.62532 -0.139896,-3.05027 -0.574457,-4.58804 z"
+                   id="path11" /></g></svg>
+            Create NMF</button>
+          <button class="instantiation-btn" onclick="invokeMethod('bertopic')">
+            <svg
+               width="58.256847mm"
+               height="60.830791mm"
+               viewBox="0 0 58.256847 60.830791"
+               version="1.1"
+               id="svg1"
+               xml:space="preserve"
+               inkscape:export-filename="SemanticSapience--DevLogo.svg"
+               inkscape:export-xdpi="96"
+               inkscape:export-ydpi="96"
+               xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+               xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+               xmlns:xlink="http://www.w3.org/1999/xlink"
+               xmlns="http://www.w3.org/2000/svg"
+               xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
+                 id="namedview1"
+                 pagecolor="#ffffff"
+                 bordercolor="#000000"
+                 borderopacity="0.25"
+                 inkscape:showpageshadow="2"
+                 inkscape:pageopacity="0.0"
+                 inkscape:pagecheckerboard="0"
+                 inkscape:deskcolor="#d1d1d1"
+                 inkscape:document-units="mm" /><defs
+                 id="defs1"><linearGradient
+                   id="linearGradient11"
+                   inkscape:collect="always"><stop
+                     style="stop-color:#064bb3;stop-opacity:1"
+                     offset="0"
+                     id="stop11" /><stop
+                     style="stop-color:#040404;stop-opacity:0;"
+                     offset="1"
+                     id="stop12" /></linearGradient><linearGradient
+                   inkscape:collect="always"
+                   xlink:href="#linearGradient11"
+                   id="linearGradient12"
+                   x1="3.8223939"
+                   y1="128.81467"
+                   x2="67.656372"
+                   y2="189.59073"
+                   gradientUnits="userSpaceOnUse"
+                   gradientTransform="matrix(0.48168406,0,0,0.48168406,43.364813,38.094135)" /></defs><g
+                 inkscape:label="Layer 1"
+                 inkscape:groupmode="layer"
+                 id="layer1"
+                 transform="translate(-25.407979,-76.82694)"><path
+                   style="fill:url(#linearGradient12);fill-opacity:1;stroke:none;stroke-width:0.481684"
+                   d="m 64.430511,102.65688 c 2.13112,-1.00867 4.078482,-2.877806 5.989944,-4.260813 0.66983,-0.484646 1.480316,-1.36345 2.29402,-1.572462 0.730474,-0.18764 2.03461,0.801402 2.803801,0.982669 2.240202,0.527926 4.793021,-0.207206 6.346809,-1.905359 4.488052,-4.905037 -0.375304,-12.579182 -6.729145,-10.880552 -2.66328,0.712 -4.506714,3.213563 -4.70075,5.911519 -0.05753,0.799918 0.519053,2.065398 0.195626,2.775314 -0.243848,0.535237 -1.029263,0.930006 -1.48482,1.269733 -1.18227,0.881675 -2.368942,1.760888 -3.568489,2.618869 -0.768638,0.549774 -2.196595,2.143431 -3.186123,2.100508 -1.168643,-0.05069 -2.424899,-1.375285 -3.695924,-1.580926 -0.576407,-0.09326 -1.479213,0.151875 -1.947424,-0.265412 -0.494781,-0.440972 -0.600636,-1.464671 -0.78069,-2.075158 -0.450736,-1.528249 -0.913943,-3.055625 -1.350061,-4.588041 -0.157316,-0.552766 -0.540326,-1.3286 -0.439242,-1.90821 0.131448,-0.753715 1.316477,-1.431132 1.770898,-2.042697 0.91098,-1.226003 1.293558,-2.824378 1.209176,-4.333053 -0.261882,-4.682189 -5.595824,-7.47024 -9.677866,-5.361255 -3.766021,1.945715 -4.627576,6.981748 -1.939955,10.175703 0.813161,0.966355 1.887359,1.608444 3.086965,1.971359 0.573886,0.173619 1.599574,0.105128 2.026804,0.552704 0.408757,0.428227 0.504209,1.286082 0.674563,1.837572 0.469843,1.521028 0.857053,3.066463 1.32392,4.58804 0.178143,0.580589 0.670815,1.545575 0.462432,2.150628 -0.195896,0.568792 -0.991421,0.954616 -1.41439,1.34685 -0.568068,0.52679 -0.913528,1.29854 -1.483898,1.79379 -0.455333,0.39537 -1.211386,0.0317 -1.716876,-0.0995 -1.488916,-0.38667 -2.971062,-0.79509 -4.460596,-1.18002 -1.42836,-0.36911 -3.893715,-0.54446 -5.070304,-1.441673 -0.59486,-0.453607 -0.550271,-1.642577 -0.783555,-2.315162 -0.376855,-1.08652 -1.14374,-2.11138 -2.049095,-2.81408 -4.677833,-3.630751 -10.886871,0.109482 -10.700543,5.745325 0.148946,4.50514 5.187426,7.18552 9.172525,5.52023 0.834081,-0.34854 1.558821,-0.87982 2.170589,-1.5428 0.32852,-0.35602 0.643236,-1.00762 1.158943,-1.103 1.257726,-0.23263 3.47491,0.82402 4.699539,1.18036 1.515301,0.44093 3.066937,0.77427 4.58804,1.20098 0.542467,0.15218 1.433376,0.22273 1.820263,0.67268 0.454756,0.52888 0.335879,1.91528 0.549788,2.61041 0.155041,0.50382 0.633401,1.1287 0.612185,1.65679 -0.03103,0.77254 -1.327362,1.65871 -1.835225,2.16657 l -4.205704,4.20571 c -0.550733,0.55073 -1.188762,1.46576 -1.911683,1.78367 -0.679268,0.29873 -2.127468,-0.81581 -2.803803,-1.06651 -1.703257,-0.63135 -3.698286,-0.70633 -5.48016,-0.4159 -8.130652,1.3252 -11.388264,11.94869 -5.709926,17.78137 5.948542,6.11024 16.517725,2.83507 18.112611,-5.46552 0.340217,-1.77067 0.103439,-3.79426 -0.488752,-5.48016 -0.236377,-0.67294 -1.322305,-2.00037 -1.058688,-2.67636 0.281741,-0.72246 1.223603,-1.37342 1.761867,-1.91168 l 4.333149,-4.33315 c 0.505251,-0.50525 1.288205,-1.65436 2.039129,-1.75156 0.98306,-0.12724 2.352048,0.91797 3.44103,0.97889 1.085027,0.0607 2.1482,-0.029 3.186138,-0.36274 0.520435,-0.16732 1.206267,-0.66741 1.755753,-0.63078 0.47929,0.0319 0.970294,0.73064 1.295368,1.04277 0.953138,0.91517 1.849696,1.8891 2.803806,2.80378 0.322806,0.30947 1.024509,0.81324 1.088645,1.27977 0.11466,0.83405 -0.976176,2.24438 -1.156235,3.13959 -0.696679,3.46375 0.411195,7.14613 3.2613,9.33218 7.137041,5.47416 17.503223,-1.71241 14.494475,-10.35174 -1.417663,-4.0707 -5.531722,-6.55272 -9.77899,-6.07849 -1.009962,0.11276 -2.008387,0.33018 -2.931245,0.76968 -0.414629,0.19746 -0.964081,0.69987 -1.44104,0.45247 -1.38172,-0.7167 -2.680292,-2.62416 -3.784558,-3.72507 -0.347699,-0.34664 -1.10389,-0.85554 -1.129944,-1.38785 -0.04258,-0.87005 0.784095,-1.99734 0.940055,-2.90274 0.279959,-1.62532 -0.139896,-3.05027 -0.574457,-4.58804 z"
+                   id="path11" /></g></svg>
+            Create BERTopic</button>
+          <button class="instantiation-btn" onclick="invokeMethod('lsa')">
+            <svg
+               width="58.256847mm"
+               height="60.830791mm"
+               viewBox="0 0 58.256847 60.830791"
+               version="1.1"
+               id="svg1"
+               xml:space="preserve"
+               inkscape:export-filename="SemanticSapience--DevLogo.svg"
+               inkscape:export-xdpi="96"
+               inkscape:export-ydpi="96"
+               xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+               xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+               xmlns:xlink="http://www.w3.org/1999/xlink"
+               xmlns="http://www.w3.org/2000/svg"
+               xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
+                 id="namedview1"
+                 pagecolor="#ffffff"
+                 bordercolor="#000000"
+                 borderopacity="0.25"
+                 inkscape:showpageshadow="2"
+                 inkscape:pageopacity="0.0"
+                 inkscape:pagecheckerboard="0"
+                 inkscape:deskcolor="#d1d1d1"
+                 inkscape:document-units="mm" /><defs
+                 id="defs1"><linearGradient
+                   id="linearGradient11"
+                   inkscape:collect="always"><stop
+                     style="stop-color:#064bb3;stop-opacity:1"
+                     offset="0"
+                     id="stop11" /><stop
+                     style="stop-color:#040404;stop-opacity:0;"
+                     offset="1"
+                     id="stop12" /></linearGradient><linearGradient
+                   inkscape:collect="always"
+                   xlink:href="#linearGradient11"
+                   id="linearGradient12"
+                   x1="3.8223939"
+                   y1="128.81467"
+                   x2="67.656372"
+                   y2="189.59073"
+                   gradientUnits="userSpaceOnUse"
+                   gradientTransform="matrix(0.48168406,0,0,0.48168406,43.364813,38.094135)" /></defs><g
+                 inkscape:label="Layer 1"
+                 inkscape:groupmode="layer"
+                 id="layer1"
+                 transform="translate(-25.407979,-76.82694)"><path
+                   style="fill:url(#linearGradient12);fill-opacity:1;stroke:none;stroke-width:0.481684"
+                   d="m 64.430511,102.65688 c 2.13112,-1.00867 4.078482,-2.877806 5.989944,-4.260813 0.66983,-0.484646 1.480316,-1.36345 2.29402,-1.572462 0.730474,-0.18764 2.03461,0.801402 2.803801,0.982669 2.240202,0.527926 4.793021,-0.207206 6.346809,-1.905359 4.488052,-4.905037 -0.375304,-12.579182 -6.729145,-10.880552 -2.66328,0.712 -4.506714,3.213563 -4.70075,5.911519 -0.05753,0.799918 0.519053,2.065398 0.195626,2.775314 -0.243848,0.535237 -1.029263,0.930006 -1.48482,1.269733 -1.18227,0.881675 -2.368942,1.760888 -3.568489,2.618869 -0.768638,0.549774 -2.196595,2.143431 -3.186123,2.100508 -1.168643,-0.05069 -2.424899,-1.375285 -3.695924,-1.580926 -0.576407,-0.09326 -1.479213,0.151875 -1.947424,-0.265412 -0.494781,-0.440972 -0.600636,-1.464671 -0.78069,-2.075158 -0.450736,-1.528249 -0.913943,-3.055625 -1.350061,-4.588041 -0.157316,-0.552766 -0.540326,-1.3286 -0.439242,-1.90821 0.131448,-0.753715 1.316477,-1.431132 1.770898,-2.042697 0.91098,-1.226003 1.293558,-2.824378 1.209176,-4.333053 -0.261882,-4.682189 -5.595824,-7.47024 -9.677866,-5.361255 -3.766021,1.945715 -4.627576,6.981748 -1.939955,10.175703 0.813161,0.966355 1.887359,1.608444 3.086965,1.971359 0.573886,0.173619 1.599574,0.105128 2.026804,0.552704 0.408757,0.428227 0.504209,1.286082 0.674563,1.837572 0.469843,1.521028 0.857053,3.066463 1.32392,4.58804 0.178143,0.580589 0.670815,1.545575 0.462432,2.150628 -0.195896,0.568792 -0.991421,0.954616 -1.41439,1.34685 -0.568068,0.52679 -0.913528,1.29854 -1.483898,1.79379 -0.455333,0.39537 -1.211386,0.0317 -1.716876,-0.0995 -1.488916,-0.38667 -2.971062,-0.79509 -4.460596,-1.18002 -1.42836,-0.36911 -3.893715,-0.54446 -5.070304,-1.441673 -0.59486,-0.453607 -0.550271,-1.642577 -0.783555,-2.315162 -0.376855,-1.08652 -1.14374,-2.11138 -2.049095,-2.81408 -4.677833,-3.630751 -10.886871,0.109482 -10.700543,5.745325 0.148946,4.50514 5.187426,7.18552 9.172525,5.52023 0.834081,-0.34854 1.558821,-0.87982 2.170589,-1.5428 0.32852,-0.35602 0.643236,-1.00762 1.158943,-1.103 1.257726,-0.23263 3.47491,0.82402 4.699539,1.18036 1.515301,0.44093 3.066937,0.77427 4.58804,1.20098 0.542467,0.15218 1.433376,0.22273 1.820263,0.67268 0.454756,0.52888 0.335879,1.91528 0.549788,2.61041 0.155041,0.50382 0.633401,1.1287 0.612185,1.65679 -0.03103,0.77254 -1.327362,1.65871 -1.835225,2.16657 l -4.205704,4.20571 c -0.550733,0.55073 -1.188762,1.46576 -1.911683,1.78367 -0.679268,0.29873 -2.127468,-0.81581 -2.803803,-1.06651 -1.703257,-0.63135 -3.698286,-0.70633 -5.48016,-0.4159 -8.130652,1.3252 -11.388264,11.94869 -5.709926,17.78137 5.948542,6.11024 16.517725,2.83507 18.112611,-5.46552 0.340217,-1.77067 0.103439,-3.79426 -0.488752,-5.48016 -0.236377,-0.67294 -1.322305,-2.00037 -1.058688,-2.67636 0.281741,-0.72246 1.223603,-1.37342 1.761867,-1.91168 l 4.333149,-4.33315 c 0.505251,-0.50525 1.288205,-1.65436 2.039129,-1.75156 0.98306,-0.12724 2.352048,0.91797 3.44103,0.97889 1.085027,0.0607 2.1482,-0.029 3.186138,-0.36274 0.520435,-0.16732 1.206267,-0.66741 1.755753,-0.63078 0.47929,0.0319 0.970294,0.73064 1.295368,1.04277 0.953138,0.91517 1.849696,1.8891 2.803806,2.80378 0.322806,0.30947 1.024509,0.81324 1.088645,1.27977 0.11466,0.83405 -0.976176,2.24438 -1.156235,3.13959 -0.696679,3.46375 0.411195,7.14613 3.2613,9.33218 7.137041,5.47416 17.503223,-1.71241 14.494475,-10.35174 -1.417663,-4.0707 -5.531722,-6.55272 -9.77899,-6.07849 -1.009962,0.11276 -2.008387,0.33018 -2.931245,0.76968 -0.414629,0.19746 -0.964081,0.69987 -1.44104,0.45247 -1.38172,-0.7167 -2.680292,-2.62416 -3.784558,-3.72507 -0.347699,-0.34664 -1.10389,-0.85554 -1.129944,-1.38785 -0.04258,-0.87005 0.784095,-1.99734 0.940055,-2.90274 0.279959,-1.62532 -0.139896,-3.05027 -0.574457,-4.58804 z"
+                   id="path11" /></g></svg>
+            Create LSA</button>
+        </div>
+
+        <!-- Word Clouds -->
+        <p style="margin:10px 0;">Word Cloud Analysis</p>
+        <br>
+        <div class="wrapper-btn" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+          <button class="instantiation-btn" onclick="invokeMethod('tfidf')">
+            <svg
+               width="62.508354mm"
+               height="41.811565mm"
+               viewBox="0 0 62.508354 41.811565"
+               version="1.1"
+               id="svg1"
+               xml:space="preserve"
+               inkscape:export-filename="SemanticSapience--DevLogo.svg"
+               inkscape:export-xdpi="96"
+               inkscape:export-ydpi="96"
+               xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+               xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+               xmlns:xlink="http://www.w3.org/1999/xlink"
+               xmlns="http://www.w3.org/2000/svg"
+               xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
+                 id="namedview1"
+                 pagecolor="#ffffff"
+                 bordercolor="#000000"
+                 borderopacity="0.25"
+                 inkscape:showpageshadow="2"
+                 inkscape:pageopacity="0.0"
+                 inkscape:pagecheckerboard="0"
+                 inkscape:deskcolor="#d1d1d1"
+                 inkscape:document-units="mm" /><defs
+                 id="defs1"><linearGradient
+                   id="linearGradient6"
+                   inkscape:collect="always"><stop
+                     style="stop-color:#074fb6;stop-opacity:1"
+                     offset="0"
+                     id="stop6" /><stop
+                     style="stop-color:#000080;stop-opacity:0;"
+                     offset="1"
+                     id="stop7" /></linearGradient><linearGradient
+                   inkscape:collect="always"
+                   xlink:href="#linearGradient6"
+                   id="linearGradient7"
+                   x1="58.864864"
+                   y1="274.44788"
+                   x2="99"
+                   y2="285.15057"
+                   gradientUnits="userSpaceOnUse"
+                   gradientTransform="translate(1.1467181,5.7335907)" /></defs><g
+                 inkscape:label="Layer 1"
+                 inkscape:groupmode="layer"
+                 id="layer1"
+                 transform="translate(-16.924933,-252.81861)"><g
+                   id="g7"
+                   transform="translate(-14.907336,-1.1467181)"><path
+                     style="fill:#074fb6;fill-opacity:1;stroke:none"
+                     d="m 51.132832,261.36506 c -5.03947,-1.37098 -9.23107,2.42177 -9.26041,7.40834 -7.14161,-1.70762 -13.74925,6.66292 -7.618,12.33602 2.7242,2.52064 6.59169,1.95148 9.99925,1.95148 h 22.224999 c 3.37209,0 7.37977,0.65684 10.31153,-1.36157 3.02667,-2.08377 3.85224,-6.29219 2.15958,-9.48635 -0.67059,-1.26545 -1.97129,-2.00903 -2.64193,-3.22696 -0.64064,-1.16345 -0.32293,-2.67374 -0.94468,-3.91679 -1.86413,-3.72694 -5.97124,-4.59915 -9.67825,-3.43958 -0.0206,-10.03145 -14.408769,-10.31481 -14.552089,-0.26459 z"
+                     id="path5" /><path
+                     style="fill:url(#linearGradient7);fill-opacity:1;stroke:none"
+                     d="m 65.657928,273.97896 c -5.03947,-1.37098 -9.23107,2.42177 -9.26041,7.40834 -7.14161,-1.70762 -13.74925,6.66292 -7.618,12.33602 2.7242,2.52064 6.59169,1.95148 9.99925,1.95148 h 22.224999 c 3.37209,0 7.37977,0.65684 10.31153,-1.36157 3.02667,-2.08377 3.85224,-6.29219 2.15958,-9.48635 -0.67059,-1.26545 -1.97129,-2.00903 -2.64193,-3.22696 -0.64064,-1.16345 -0.32293,-2.67374 -0.94468,-3.91679 -1.86413,-3.72694 -5.97124,-4.59915 -9.67825,-3.43958 -0.0206,-10.03145 -14.408769,-10.31481 -14.552089,-0.26459 z"
+                     id="path6" /></g></g></svg>
+            TF-IDF Word Cloud</button>
+          <button class="instantiation-btn" onclick="invokeMethod('freq')">
+            <svg
+               width="62.508354mm"
+               height="41.811565mm"
+               viewBox="0 0 62.508354 41.811565"
+               version="1.1"
+               id="svg1"
+               xml:space="preserve"
+               inkscape:export-filename="SemanticSapience--DevLogo.svg"
+               inkscape:export-xdpi="96"
+               inkscape:export-ydpi="96"
+               xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+               xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+               xmlns:xlink="http://www.w3.org/1999/xlink"
+               xmlns="http://www.w3.org/2000/svg"
+               xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
+                 id="namedview1"
+                 pagecolor="#ffffff"
+                 bordercolor="#000000"
+                 borderopacity="0.25"
+                 inkscape:showpageshadow="2"
+                 inkscape:pageopacity="0.0"
+                 inkscape:pagecheckerboard="0"
+                 inkscape:deskcolor="#d1d1d1"
+                 inkscape:document-units="mm" /><defs
+                 id="defs1"><linearGradient
+                   id="linearGradient6"
+                   inkscape:collect="always"><stop
+                     style="stop-color:#074fb6;stop-opacity:1"
+                     offset="0"
+                     id="stop6" /><stop
+                     style="stop-color:#000080;stop-opacity:0;"
+                     offset="1"
+                     id="stop7" /></linearGradient><linearGradient
+                   inkscape:collect="always"
+                   xlink:href="#linearGradient6"
+                   id="linearGradient7"
+                   x1="58.864864"
+                   y1="274.44788"
+                   x2="99"
+                   y2="285.15057"
+                   gradientUnits="userSpaceOnUse"
+                   gradientTransform="translate(1.1467181,5.7335907)" /></defs><g
+                 inkscape:label="Layer 1"
+                 inkscape:groupmode="layer"
+                 id="layer1"
+                 transform="translate(-16.924933,-252.81861)"><g
+                   id="g7"
+                   transform="translate(-14.907336,-1.1467181)"><path
+                     style="fill:#074fb6;fill-opacity:1;stroke:none"
+                     d="m 51.132832,261.36506 c -5.03947,-1.37098 -9.23107,2.42177 -9.26041,7.40834 -7.14161,-1.70762 -13.74925,6.66292 -7.618,12.33602 2.7242,2.52064 6.59169,1.95148 9.99925,1.95148 h 22.224999 c 3.37209,0 7.37977,0.65684 10.31153,-1.36157 3.02667,-2.08377 3.85224,-6.29219 2.15958,-9.48635 -0.67059,-1.26545 -1.97129,-2.00903 -2.64193,-3.22696 -0.64064,-1.16345 -0.32293,-2.67374 -0.94468,-3.91679 -1.86413,-3.72694 -5.97124,-4.59915 -9.67825,-3.43958 -0.0206,-10.03145 -14.408769,-10.31481 -14.552089,-0.26459 z"
+                     id="path5" /><path
+                     style="fill:url(#linearGradient7);fill-opacity:1;stroke:none"
+                     d="m 65.657928,273.97896 c -5.03947,-1.37098 -9.23107,2.42177 -9.26041,7.40834 -7.14161,-1.70762 -13.74925,6.66292 -7.618,12.33602 2.7242,2.52064 6.59169,1.95148 9.99925,1.95148 h 22.224999 c 3.37209,0 7.37977,0.65684 10.31153,-1.36157 3.02667,-2.08377 3.85224,-6.29219 2.15958,-9.48635 -0.67059,-1.26545 -1.97129,-2.00903 -2.64193,-3.22696 -0.64064,-1.16345 -0.32293,-2.67374 -0.94468,-3.91679 -1.86413,-3.72694 -5.97124,-4.59915 -9.67825,-3.43958 -0.0206,-10.03145 -14.408769,-10.31481 -14.552089,-0.26459 z"
+                     id="path6" /></g></g></svg>
+            Frequency Word Cloud</button>
+          <button class="instantiation-btn" onclick="invokeMethod('collocation')">
+            <svg
+               width="62.508354mm"
+               height="41.811565mm"
+               viewBox="0 0 62.508354 41.811565"
+               version="1.1"
+               id="svg1"
+               xml:space="preserve"
+               inkscape:export-filename="SemanticSapience--DevLogo.svg"
+               inkscape:export-xdpi="96"
+               inkscape:export-ydpi="96"
+               xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+               xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+               xmlns:xlink="http://www.w3.org/1999/xlink"
+               xmlns="http://www.w3.org/2000/svg"
+               xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
+                 id="namedview1"
+                 pagecolor="#ffffff"
+                 bordercolor="#000000"
+                 borderopacity="0.25"
+                 inkscape:showpageshadow="2"
+                 inkscape:pageopacity="0.0"
+                 inkscape:pagecheckerboard="0"
+                 inkscape:deskcolor="#d1d1d1"
+                 inkscape:document-units="mm" /><defs
+                 id="defs1"><linearGradient
+                   id="linearGradient6"
+                   inkscape:collect="always"><stop
+                     style="stop-color:#074fb6;stop-opacity:1"
+                     offset="0"
+                     id="stop6" /><stop
+                     style="stop-color:#000080;stop-opacity:0;"
+                     offset="1"
+                     id="stop7" /></linearGradient><linearGradient
+                   inkscape:collect="always"
+                   xlink:href="#linearGradient6"
+                   id="linearGradient7"
+                   x1="58.864864"
+                   y1="274.44788"
+                   x2="99"
+                   y2="285.15057"
+                   gradientUnits="userSpaceOnUse"
+                   gradientTransform="translate(1.1467181,5.7335907)" /></defs><g
+                 inkscape:label="Layer 1"
+                 inkscape:groupmode="layer"
+                 id="layer1"
+                 transform="translate(-16.924933,-252.81861)"><g
+                   id="g7"
+                   transform="translate(-14.907336,-1.1467181)"><path
+                     style="fill:#074fb6;fill-opacity:1;stroke:none"
+                     d="m 51.132832,261.36506 c -5.03947,-1.37098 -9.23107,2.42177 -9.26041,7.40834 -7.14161,-1.70762 -13.74925,6.66292 -7.618,12.33602 2.7242,2.52064 6.59169,1.95148 9.99925,1.95148 h 22.224999 c 3.37209,0 7.37977,0.65684 10.31153,-1.36157 3.02667,-2.08377 3.85224,-6.29219 2.15958,-9.48635 -0.67059,-1.26545 -1.97129,-2.00903 -2.64193,-3.22696 -0.64064,-1.16345 -0.32293,-2.67374 -0.94468,-3.91679 -1.86413,-3.72694 -5.97124,-4.59915 -9.67825,-3.43958 -0.0206,-10.03145 -14.408769,-10.31481 -14.552089,-0.26459 z"
+                     id="path5" /><path
+                     style="fill:url(#linearGradient7);fill-opacity:1;stroke:none"
+                     d="m 65.657928,273.97896 c -5.03947,-1.37098 -9.23107,2.42177 -9.26041,7.40834 -7.14161,-1.70762 -13.74925,6.66292 -7.618,12.33602 2.7242,2.52064 6.59169,1.95148 9.99925,1.95148 h 22.224999 c 3.37209,0 7.37977,0.65684 10.31153,-1.36157 3.02667,-2.08377 3.85224,-6.29219 2.15958,-9.48635 -0.67059,-1.26545 -1.97129,-2.00903 -2.64193,-3.22696 -0.64064,-1.16345 -0.32293,-2.67374 -0.94468,-3.91679 -1.86413,-3.72694 -5.97124,-4.59915 -9.67825,-3.43958 -0.0206,-10.03145 -14.408769,-10.31481 -14.552089,-0.26459 z"
+                     id="path6" /></g></g></svg>
+            Collocation Word Cloud</button>
+          <button class="instantiation-btn" onclick="invokeMethod('semanticwc')">
+            <svg
+               width="62.508354mm"
+               height="41.811565mm"
+               viewBox="0 0 62.508354 41.811565"
+               version="1.1"
+               id="svg1"
+               xml:space="preserve"
+               inkscape:export-filename="SemanticSapience--DevLogo.svg"
+               inkscape:export-xdpi="96"
+               inkscape:export-ydpi="96"
+               xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+               xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+               xmlns:xlink="http://www.w3.org/1999/xlink"
+               xmlns="http://www.w3.org/2000/svg"
+               xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
+                 id="namedview1"
+                 pagecolor="#ffffff"
+                 bordercolor="#000000"
+                 borderopacity="0.25"
+                 inkscape:showpageshadow="2"
+                 inkscape:pageopacity="0.0"
+                 inkscape:pagecheckerboard="0"
+                 inkscape:deskcolor="#d1d1d1"
+                 inkscape:document-units="mm" /><defs
+                 id="defs1"><linearGradient
+                   id="linearGradient6"
+                   inkscape:collect="always"><stop
+                     style="stop-color:#074fb6;stop-opacity:1"
+                     offset="0"
+                     id="stop6" /><stop
+                     style="stop-color:#000080;stop-opacity:0;"
+                     offset="1"
+                     id="stop7" /></linearGradient><linearGradient
+                   inkscape:collect="always"
+                   xlink:href="#linearGradient6"
+                   id="linearGradient7"
+                   x1="58.864864"
+                   y1="274.44788"
+                   x2="99"
+                   y2="285.15057"
+                   gradientUnits="userSpaceOnUse"
+                   gradientTransform="translate(1.1467181,5.7335907)" /></defs><g
+                 inkscape:label="Layer 1"
+                 inkscape:groupmode="layer"
+                 id="layer1"
+                 transform="translate(-16.924933,-252.81861)"><g
+                   id="g7"
+                   transform="translate(-14.907336,-1.1467181)"><path
+                     style="fill:#074fb6;fill-opacity:1;stroke:none"
+                     d="m 51.132832,261.36506 c -5.03947,-1.37098 -9.23107,2.42177 -9.26041,7.40834 -7.14161,-1.70762 -13.74925,6.66292 -7.618,12.33602 2.7242,2.52064 6.59169,1.95148 9.99925,1.95148 h 22.224999 c 3.37209,0 7.37977,0.65684 10.31153,-1.36157 3.02667,-2.08377 3.85224,-6.29219 2.15958,-9.48635 -0.67059,-1.26545 -1.97129,-2.00903 -2.64193,-3.22696 -0.64064,-1.16345 -0.32293,-2.67374 -0.94468,-3.91679 -1.86413,-3.72694 -5.97124,-4.59915 -9.67825,-3.43958 -0.0206,-10.03145 -14.408769,-10.31481 -14.552089,-0.26459 z"
+                     id="path5" /><path
+                     style="fill:url(#linearGradient7);fill-opacity:1;stroke:none"
+                     d="m 65.657928,273.97896 c -5.03947,-1.37098 -9.23107,2.42177 -9.26041,7.40834 -7.14161,-1.70762 -13.74925,6.66292 -7.618,12.33602 2.7242,2.52064 6.59169,1.95148 9.99925,1.95148 h 22.224999 c 3.37209,0 7.37977,0.65684 10.31153,-1.36157 3.02667,-2.08377 3.85224,-6.29219 2.15958,-9.48635 -0.67059,-1.26545 -1.97129,-2.00903 -2.64193,-3.22696 -0.64064,-1.16345 -0.32293,-2.67374 -0.94468,-3.91679 -1.86413,-3.72694 -5.97124,-4.59915 -9.67825,-3.43958 -0.0206,-10.03145 -14.408769,-10.31481 -14.552089,-0.26459 z"
+                     id="path6" /></g></g></svg>
+            Semantic Word Cloud</button>
+        </div>
+
+        <!-- Sentiment Analysis -->
+        <p style="margin:10px 0;">Sentiment Analysis Modals</p>
+        <br>
+        <div class="wrapper-btn" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+          <button class="instantiation-btn" onclick="invokeMethod('rulebasedsa')">
+            <svg
+   width="70.33812mm"
+   height="39.589588mm"
+   viewBox="0 0 70.33812 39.589588"
+   version="1.1"
+   id="svg1"
+   xml:space="preserve"
+   inkscape:export-filename="SemanticSapience--DevLogo.svg"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm" /><defs
+     id="defs1"><linearGradient
+       id="linearGradient8"
+       inkscape:collect="always"><stop
+         style="stop-color:#074fb6;stop-opacity:1;"
+         offset="0"
+         id="stop8" /><stop
+         style="stop-color:#074fb6;stop-opacity:0;"
+         offset="1"
+         id="stop9" /></linearGradient><linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient8"
+       id="linearGradient9"
+       x1="97.853279"
+       y1="220.16989"
+       x2="125.37452"
+       y2="306.556"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.51382314,0,0,0.51382314,84.933768,146.8616)" /></defs><g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-100.34259,-250.76957)"><path
+       style="fill:url(#linearGradient9);fill-opacity:1;stroke:none;stroke-width:0.513823"
+       d="m 150.15241,276.721 c -4.07514,1.56976 -8.34765,2.77762 -12.5073,4.1109 -1.84128,0.59017 -4.24019,0.94653 -5.4953,2.55203 -2.65619,3.39771 0.958,8.18582 4.9515,6.69541 1.86729,-0.6969 3.43315,-2.64996 4.89416,-3.95258 2.99356,-2.66902 6.06183,-5.28781 8.97264,-8.04627 1.09262,2.63397 1.40285,4.99273 1.90329,7.74909 h 17.80932 c 0,-9.30588 -3.69393,-18.43044 -10.33309,-25.01083 -11.94123,-11.83553 -31.95626,-13.51196 -45.54197,-3.45245 -6.85564,5.07625 -11.80222,12.49036 -13.62402,20.85014 -0.39799,1.82627 -0.68893,3.70536 -0.77851,5.57391 -0.0242,0.50422 -0.18522,1.51486 0.14453,1.93732 0.51016,0.65359 3.15369,0.23786 3.92587,0.23786 h 10.06023 c 0.82735,0 2.91093,0.377 3.57311,-0.1563 0.55106,-0.4438 0.45682,-2.90662 0.61543,-3.65027 0.51217,-2.4012 1.60599,-4.72235 3.10954,-6.6615 5.11135,-6.59217 14.33554,-9.02396 21.79502,-4.91986 2.64541,1.45548 4.8389,3.66816 6.52555,6.1434 m -15.63414,-22.9324 c 1.38771,-0.18115 2.85486,0.01 4.07848,0.71492 4.73603,2.72868 3.18548,10.25509 -2.17519,11.02439 -7.4905,1.07494 -9.43743,-10.75581 -1.90329,-11.73931 m 0.13595,0.84003 c -6.50115,1.15766 -4.66422,11.1686 1.76734,10.02477 6.51807,-1.1592 4.72051,-11.18006 -1.76734,-10.02477 m 3.40357,2.36986 c 0.81354,-0.0651 0.91608,1.16579 0.1252,1.29206 -0.87565,0.1398 -0.96762,-1.2246 -0.1252,-1.29206 m -5.27806,0.1131 c 0.75218,-0.2974 1.21206,0.83882 0.4751,1.13139 -0.74466,0.29562 -1.21435,-0.8391 -0.4751,-1.13139 m 0.28509,4.20863 c 1.00918,-0.48592 3.46675,-0.20636 4.57827,-0.0837 0.4474,0.0494 1.02879,0.49669 0.473,0.89926 -0.79092,0.57286 -3.86692,0.3386 -4.81119,0.13411 -0.48254,-0.1045 -0.80932,-0.67563 -0.24008,-0.94972 m -20.70624,5.934 c 7.56124,-0.49777 8.09845,11.28627 0.54379,11.76184 -7.59695,0.47824 -8.1425,-11.26161 -0.54379,-11.76184 m 45.40698,-0.007 c 7.43178,-0.94236 8.81964,10.78635 1.35949,11.74174 -6.03325,0.77265 -9.2474,-7.60435 -3.94252,-10.83856 0.77938,-0.47517 1.67732,-0.78834 2.58303,-0.90318 m -46.22268,0.8401 c -6.59824,1.175 -4.39,11.2861 2.17519,10.08024 6.55372,-1.20375 4.33169,-11.23898 -2.17519,-10.08024 m 45.81484,0 c -6.56924,1.16976 -4.49859,11.17456 2.03923,10.07883 6.5232,-1.09328 4.44147,-11.23284 -2.03923,-10.07883 m -47.3058,2.5214 c 0.72658,0 0.71642,1.10574 0,1.10574 -0.69485,0 -0.70497,-1.10574 0,-1.10574 m 5.04125,-0.0304 c 0.71575,-0.0778 0.79607,1.06064 0.10913,1.13693 -0.69737,0.0774 -0.79614,-1.06227 -0.10913,-1.13693 m 40.64263,-0.0111 c 0.77245,-0.10047 0.89175,1.09153 0.12198,1.17391 -0.72693,0.0778 -0.83596,-1.08104 -0.12198,-1.17391 m 5.03767,-0.008 c 0.74713,-0.14307 0.97052,0.96948 0.243,1.14051 -0.7231,0.16999 -0.99441,-0.99663 -0.243,-1.14051 m -48.95869,3.76555 c 0.90429,-0.16225 1.93585,-0.071 2.71472,0.43899 0.25332,0.16588 1.21393,1.06471 0.49047,1.28779 -0.56222,0.17337 -1.39925,-0.66932 -1.98165,-0.77468 -1.14015,-0.20625 -1.88354,0.92895 -2.81294,0.81481 -0.46596,-0.0572 -0.29217,-0.59431 -0.10285,-0.83607 0.38662,-0.4937 1.08612,-0.82208 1.69225,-0.93084 m 44.10412,0.34724 c 0.60225,-0.17676 1.57026,0.80761 2.25451,0.8777 1.01109,0.10358 1.69683,-1.01714 2.55321,-0.91873 1.22933,0.14125 -0.84091,1.64527 -1.19372,1.76464 -1.00365,0.33955 -2.23259,0.23301 -3.12484,-0.35846 -0.26503,-0.17568 -1.23613,-1.14592 -0.48916,-1.36515 m -20.58494,9.30798 c 2.5886,-0.26227 3.16365,3.7774 0.5438,4.12811 -2.76066,0.36956 -3.31615,-3.84722 -0.5438,-4.12811 z"
+       id="path7" /></g></svg>
+Rule-Based Sentiment</button>
+          <button class="instantiation-btn" onclick="invokeMethod('dlbasedsa')">
+            <svg
+   width="70.33812mm"
+   height="39.589588mm"
+   viewBox="0 0 70.33812 39.589588"
+   version="1.1"
+   id="svg1"
+   xml:space="preserve"
+   inkscape:export-filename="SemanticSapience--DevLogo.svg"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm" /><defs
+     id="defs1"><linearGradient
+       id="linearGradient8"
+       inkscape:collect="always"><stop
+         style="stop-color:#074fb6;stop-opacity:1;"
+         offset="0"
+         id="stop8" /><stop
+         style="stop-color:#074fb6;stop-opacity:0;"
+         offset="1"
+         id="stop9" /></linearGradient><linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient8"
+       id="linearGradient9"
+       x1="97.853279"
+       y1="220.16989"
+       x2="125.37452"
+       y2="306.556"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.51382314,0,0,0.51382314,84.933768,146.8616)" /></defs><g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-100.34259,-250.76957)"><path
+       style="fill:url(#linearGradient9);fill-opacity:1;stroke:none;stroke-width:0.513823"
+       d="m 150.15241,276.721 c -4.07514,1.56976 -8.34765,2.77762 -12.5073,4.1109 -1.84128,0.59017 -4.24019,0.94653 -5.4953,2.55203 -2.65619,3.39771 0.958,8.18582 4.9515,6.69541 1.86729,-0.6969 3.43315,-2.64996 4.89416,-3.95258 2.99356,-2.66902 6.06183,-5.28781 8.97264,-8.04627 1.09262,2.63397 1.40285,4.99273 1.90329,7.74909 h 17.80932 c 0,-9.30588 -3.69393,-18.43044 -10.33309,-25.01083 -11.94123,-11.83553 -31.95626,-13.51196 -45.54197,-3.45245 -6.85564,5.07625 -11.80222,12.49036 -13.62402,20.85014 -0.39799,1.82627 -0.68893,3.70536 -0.77851,5.57391 -0.0242,0.50422 -0.18522,1.51486 0.14453,1.93732 0.51016,0.65359 3.15369,0.23786 3.92587,0.23786 h 10.06023 c 0.82735,0 2.91093,0.377 3.57311,-0.1563 0.55106,-0.4438 0.45682,-2.90662 0.61543,-3.65027 0.51217,-2.4012 1.60599,-4.72235 3.10954,-6.6615 5.11135,-6.59217 14.33554,-9.02396 21.79502,-4.91986 2.64541,1.45548 4.8389,3.66816 6.52555,6.1434 m -15.63414,-22.9324 c 1.38771,-0.18115 2.85486,0.01 4.07848,0.71492 4.73603,2.72868 3.18548,10.25509 -2.17519,11.02439 -7.4905,1.07494 -9.43743,-10.75581 -1.90329,-11.73931 m 0.13595,0.84003 c -6.50115,1.15766 -4.66422,11.1686 1.76734,10.02477 6.51807,-1.1592 4.72051,-11.18006 -1.76734,-10.02477 m 3.40357,2.36986 c 0.81354,-0.0651 0.91608,1.16579 0.1252,1.29206 -0.87565,0.1398 -0.96762,-1.2246 -0.1252,-1.29206 m -5.27806,0.1131 c 0.75218,-0.2974 1.21206,0.83882 0.4751,1.13139 -0.74466,0.29562 -1.21435,-0.8391 -0.4751,-1.13139 m 0.28509,4.20863 c 1.00918,-0.48592 3.46675,-0.20636 4.57827,-0.0837 0.4474,0.0494 1.02879,0.49669 0.473,0.89926 -0.79092,0.57286 -3.86692,0.3386 -4.81119,0.13411 -0.48254,-0.1045 -0.80932,-0.67563 -0.24008,-0.94972 m -20.70624,5.934 c 7.56124,-0.49777 8.09845,11.28627 0.54379,11.76184 -7.59695,0.47824 -8.1425,-11.26161 -0.54379,-11.76184 m 45.40698,-0.007 c 7.43178,-0.94236 8.81964,10.78635 1.35949,11.74174 -6.03325,0.77265 -9.2474,-7.60435 -3.94252,-10.83856 0.77938,-0.47517 1.67732,-0.78834 2.58303,-0.90318 m -46.22268,0.8401 c -6.59824,1.175 -4.39,11.2861 2.17519,10.08024 6.55372,-1.20375 4.33169,-11.23898 -2.17519,-10.08024 m 45.81484,0 c -6.56924,1.16976 -4.49859,11.17456 2.03923,10.07883 6.5232,-1.09328 4.44147,-11.23284 -2.03923,-10.07883 m -47.3058,2.5214 c 0.72658,0 0.71642,1.10574 0,1.10574 -0.69485,0 -0.70497,-1.10574 0,-1.10574 m 5.04125,-0.0304 c 0.71575,-0.0778 0.79607,1.06064 0.10913,1.13693 -0.69737,0.0774 -0.79614,-1.06227 -0.10913,-1.13693 m 40.64263,-0.0111 c 0.77245,-0.10047 0.89175,1.09153 0.12198,1.17391 -0.72693,0.0778 -0.83596,-1.08104 -0.12198,-1.17391 m 5.03767,-0.008 c 0.74713,-0.14307 0.97052,0.96948 0.243,1.14051 -0.7231,0.16999 -0.99441,-0.99663 -0.243,-1.14051 m -48.95869,3.76555 c 0.90429,-0.16225 1.93585,-0.071 2.71472,0.43899 0.25332,0.16588 1.21393,1.06471 0.49047,1.28779 -0.56222,0.17337 -1.39925,-0.66932 -1.98165,-0.77468 -1.14015,-0.20625 -1.88354,0.92895 -2.81294,0.81481 -0.46596,-0.0572 -0.29217,-0.59431 -0.10285,-0.83607 0.38662,-0.4937 1.08612,-0.82208 1.69225,-0.93084 m 44.10412,0.34724 c 0.60225,-0.17676 1.57026,0.80761 2.25451,0.8777 1.01109,0.10358 1.69683,-1.01714 2.55321,-0.91873 1.22933,0.14125 -0.84091,1.64527 -1.19372,1.76464 -1.00365,0.33955 -2.23259,0.23301 -3.12484,-0.35846 -0.26503,-0.17568 -1.23613,-1.14592 -0.48916,-1.36515 m -20.58494,9.30798 c 2.5886,-0.26227 3.16365,3.7774 0.5438,4.12811 -2.76066,0.36956 -3.31615,-3.84722 -0.5438,-4.12811 z"
+       id="path7" /></g></svg>
+DL-Based Sentiment</button>
+          <p style="margin:10px 0;">
+
+LLM-Inference Sentiment Analysis Modals</p>
+          <button class="instantiation-btn" onclick="invokeMethod('absa')">
+            <svg
+   width="70.33812mm"
+   height="39.589588mm"
+   viewBox="0 0 70.33812 39.589588"
+   version="1.1"
+   id="svg1"
+   xml:space="preserve"
+   inkscape:export-filename="SemanticSapience--DevLogo.svg"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm" /><defs
+     id="defs1"><linearGradient
+       id="linearGradient8"
+       inkscape:collect="always"><stop
+         style="stop-color:#074fb6;stop-opacity:1;"
+         offset="0"
+         id="stop8" /><stop
+         style="stop-color:#074fb6;stop-opacity:0;"
+         offset="1"
+         id="stop9" /></linearGradient><linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient8"
+       id="linearGradient9"
+       x1="97.853279"
+       y1="220.16989"
+       x2="125.37452"
+       y2="306.556"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.51382314,0,0,0.51382314,84.933768,146.8616)" /></defs><g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-100.34259,-250.76957)"><path
+       style="fill:url(#linearGradient9);fill-opacity:1;stroke:none;stroke-width:0.513823"
+       d="m 150.15241,276.721 c -4.07514,1.56976 -8.34765,2.77762 -12.5073,4.1109 -1.84128,0.59017 -4.24019,0.94653 -5.4953,2.55203 -2.65619,3.39771 0.958,8.18582 4.9515,6.69541 1.86729,-0.6969 3.43315,-2.64996 4.89416,-3.95258 2.99356,-2.66902 6.06183,-5.28781 8.97264,-8.04627 1.09262,2.63397 1.40285,4.99273 1.90329,7.74909 h 17.80932 c 0,-9.30588 -3.69393,-18.43044 -10.33309,-25.01083 -11.94123,-11.83553 -31.95626,-13.51196 -45.54197,-3.45245 -6.85564,5.07625 -11.80222,12.49036 -13.62402,20.85014 -0.39799,1.82627 -0.68893,3.70536 -0.77851,5.57391 -0.0242,0.50422 -0.18522,1.51486 0.14453,1.93732 0.51016,0.65359 3.15369,0.23786 3.92587,0.23786 h 10.06023 c 0.82735,0 2.91093,0.377 3.57311,-0.1563 0.55106,-0.4438 0.45682,-2.90662 0.61543,-3.65027 0.51217,-2.4012 1.60599,-4.72235 3.10954,-6.6615 5.11135,-6.59217 14.33554,-9.02396 21.79502,-4.91986 2.64541,1.45548 4.8389,3.66816 6.52555,6.1434 m -15.63414,-22.9324 c 1.38771,-0.18115 2.85486,0.01 4.07848,0.71492 4.73603,2.72868 3.18548,10.25509 -2.17519,11.02439 -7.4905,1.07494 -9.43743,-10.75581 -1.90329,-11.73931 m 0.13595,0.84003 c -6.50115,1.15766 -4.66422,11.1686 1.76734,10.02477 6.51807,-1.1592 4.72051,-11.18006 -1.76734,-10.02477 m 3.40357,2.36986 c 0.81354,-0.0651 0.91608,1.16579 0.1252,1.29206 -0.87565,0.1398 -0.96762,-1.2246 -0.1252,-1.29206 m -5.27806,0.1131 c 0.75218,-0.2974 1.21206,0.83882 0.4751,1.13139 -0.74466,0.29562 -1.21435,-0.8391 -0.4751,-1.13139 m 0.28509,4.20863 c 1.00918,-0.48592 3.46675,-0.20636 4.57827,-0.0837 0.4474,0.0494 1.02879,0.49669 0.473,0.89926 -0.79092,0.57286 -3.86692,0.3386 -4.81119,0.13411 -0.48254,-0.1045 -0.80932,-0.67563 -0.24008,-0.94972 m -20.70624,5.934 c 7.56124,-0.49777 8.09845,11.28627 0.54379,11.76184 -7.59695,0.47824 -8.1425,-11.26161 -0.54379,-11.76184 m 45.40698,-0.007 c 7.43178,-0.94236 8.81964,10.78635 1.35949,11.74174 -6.03325,0.77265 -9.2474,-7.60435 -3.94252,-10.83856 0.77938,-0.47517 1.67732,-0.78834 2.58303,-0.90318 m -46.22268,0.8401 c -6.59824,1.175 -4.39,11.2861 2.17519,10.08024 6.55372,-1.20375 4.33169,-11.23898 -2.17519,-10.08024 m 45.81484,0 c -6.56924,1.16976 -4.49859,11.17456 2.03923,10.07883 6.5232,-1.09328 4.44147,-11.23284 -2.03923,-10.07883 m -47.3058,2.5214 c 0.72658,0 0.71642,1.10574 0,1.10574 -0.69485,0 -0.70497,-1.10574 0,-1.10574 m 5.04125,-0.0304 c 0.71575,-0.0778 0.79607,1.06064 0.10913,1.13693 -0.69737,0.0774 -0.79614,-1.06227 -0.10913,-1.13693 m 40.64263,-0.0111 c 0.77245,-0.10047 0.89175,1.09153 0.12198,1.17391 -0.72693,0.0778 -0.83596,-1.08104 -0.12198,-1.17391 m 5.03767,-0.008 c 0.74713,-0.14307 0.97052,0.96948 0.243,1.14051 -0.7231,0.16999 -0.99441,-0.99663 -0.243,-1.14051 m -48.95869,3.76555 c 0.90429,-0.16225 1.93585,-0.071 2.71472,0.43899 0.25332,0.16588 1.21393,1.06471 0.49047,1.28779 -0.56222,0.17337 -1.39925,-0.66932 -1.98165,-0.77468 -1.14015,-0.20625 -1.88354,0.92895 -2.81294,0.81481 -0.46596,-0.0572 -0.29217,-0.59431 -0.10285,-0.83607 0.38662,-0.4937 1.08612,-0.82208 1.69225,-0.93084 m 44.10412,0.34724 c 0.60225,-0.17676 1.57026,0.80761 2.25451,0.8777 1.01109,0.10358 1.69683,-1.01714 2.55321,-0.91873 1.22933,0.14125 -0.84091,1.64527 -1.19372,1.76464 -1.00365,0.33955 -2.23259,0.23301 -3.12484,-0.35846 -0.26503,-0.17568 -1.23613,-1.14592 -0.48916,-1.36515 m -20.58494,9.30798 c 2.5886,-0.26227 3.16365,3.7774 0.5438,4.12811 -2.76066,0.36956 -3.31615,-3.84722 -0.5438,-4.12811 z"
+       id="path7" /></g></svg>
+Aspect-Based Sentiment</button>
+          <button class="instantiation-btn" onclick="invokeMethod('zeroshotSentiment')">
+            <svg
+   width="70.33812mm"
+   height="39.589588mm"
+   viewBox="0 0 70.33812 39.589588"
+   version="1.1"
+   id="svg1"
+   xml:space="preserve"
+   inkscape:export-filename="SemanticSapience--DevLogo.svg"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm" /><defs
+     id="defs1"><linearGradient
+       id="linearGradient8"
+       inkscape:collect="always"><stop
+         style="stop-color:#074fb6;stop-opacity:1;"
+         offset="0"
+         id="stop8" /><stop
+         style="stop-color:#074fb6;stop-opacity:0;"
+         offset="1"
+         id="stop9" /></linearGradient><linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient8"
+       id="linearGradient9"
+       x1="97.853279"
+       y1="220.16989"
+       x2="125.37452"
+       y2="306.556"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.51382314,0,0,0.51382314,84.933768,146.8616)" /></defs><g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-100.34259,-250.76957)"><path
+       style="fill:url(#linearGradient9);fill-opacity:1;stroke:none;stroke-width:0.513823"
+       d="m 150.15241,276.721 c -4.07514,1.56976 -8.34765,2.77762 -12.5073,4.1109 -1.84128,0.59017 -4.24019,0.94653 -5.4953,2.55203 -2.65619,3.39771 0.958,8.18582 4.9515,6.69541 1.86729,-0.6969 3.43315,-2.64996 4.89416,-3.95258 2.99356,-2.66902 6.06183,-5.28781 8.97264,-8.04627 1.09262,2.63397 1.40285,4.99273 1.90329,7.74909 h 17.80932 c 0,-9.30588 -3.69393,-18.43044 -10.33309,-25.01083 -11.94123,-11.83553 -31.95626,-13.51196 -45.54197,-3.45245 -6.85564,5.07625 -11.80222,12.49036 -13.62402,20.85014 -0.39799,1.82627 -0.68893,3.70536 -0.77851,5.57391 -0.0242,0.50422 -0.18522,1.51486 0.14453,1.93732 0.51016,0.65359 3.15369,0.23786 3.92587,0.23786 h 10.06023 c 0.82735,0 2.91093,0.377 3.57311,-0.1563 0.55106,-0.4438 0.45682,-2.90662 0.61543,-3.65027 0.51217,-2.4012 1.60599,-4.72235 3.10954,-6.6615 5.11135,-6.59217 14.33554,-9.02396 21.79502,-4.91986 2.64541,1.45548 4.8389,3.66816 6.52555,6.1434 m -15.63414,-22.9324 c 1.38771,-0.18115 2.85486,0.01 4.07848,0.71492 4.73603,2.72868 3.18548,10.25509 -2.17519,11.02439 -7.4905,1.07494 -9.43743,-10.75581 -1.90329,-11.73931 m 0.13595,0.84003 c -6.50115,1.15766 -4.66422,11.1686 1.76734,10.02477 6.51807,-1.1592 4.72051,-11.18006 -1.76734,-10.02477 m 3.40357,2.36986 c 0.81354,-0.0651 0.91608,1.16579 0.1252,1.29206 -0.87565,0.1398 -0.96762,-1.2246 -0.1252,-1.29206 m -5.27806,0.1131 c 0.75218,-0.2974 1.21206,0.83882 0.4751,1.13139 -0.74466,0.29562 -1.21435,-0.8391 -0.4751,-1.13139 m 0.28509,4.20863 c 1.00918,-0.48592 3.46675,-0.20636 4.57827,-0.0837 0.4474,0.0494 1.02879,0.49669 0.473,0.89926 -0.79092,0.57286 -3.86692,0.3386 -4.81119,0.13411 -0.48254,-0.1045 -0.80932,-0.67563 -0.24008,-0.94972 m -20.70624,5.934 c 7.56124,-0.49777 8.09845,11.28627 0.54379,11.76184 -7.59695,0.47824 -8.1425,-11.26161 -0.54379,-11.76184 m 45.40698,-0.007 c 7.43178,-0.94236 8.81964,10.78635 1.35949,11.74174 -6.03325,0.77265 -9.2474,-7.60435 -3.94252,-10.83856 0.77938,-0.47517 1.67732,-0.78834 2.58303,-0.90318 m -46.22268,0.8401 c -6.59824,1.175 -4.39,11.2861 2.17519,10.08024 6.55372,-1.20375 4.33169,-11.23898 -2.17519,-10.08024 m 45.81484,0 c -6.56924,1.16976 -4.49859,11.17456 2.03923,10.07883 6.5232,-1.09328 4.44147,-11.23284 -2.03923,-10.07883 m -47.3058,2.5214 c 0.72658,0 0.71642,1.10574 0,1.10574 -0.69485,0 -0.70497,-1.10574 0,-1.10574 m 5.04125,-0.0304 c 0.71575,-0.0778 0.79607,1.06064 0.10913,1.13693 -0.69737,0.0774 -0.79614,-1.06227 -0.10913,-1.13693 m 40.64263,-0.0111 c 0.77245,-0.10047 0.89175,1.09153 0.12198,1.17391 -0.72693,0.0778 -0.83596,-1.08104 -0.12198,-1.17391 m 5.03767,-0.008 c 0.74713,-0.14307 0.97052,0.96948 0.243,1.14051 -0.7231,0.16999 -0.99441,-0.99663 -0.243,-1.14051 m -48.95869,3.76555 c 0.90429,-0.16225 1.93585,-0.071 2.71472,0.43899 0.25332,0.16588 1.21393,1.06471 0.49047,1.28779 -0.56222,0.17337 -1.39925,-0.66932 -1.98165,-0.77468 -1.14015,-0.20625 -1.88354,0.92895 -2.81294,0.81481 -0.46596,-0.0572 -0.29217,-0.59431 -0.10285,-0.83607 0.38662,-0.4937 1.08612,-0.82208 1.69225,-0.93084 m 44.10412,0.34724 c 0.60225,-0.17676 1.57026,0.80761 2.25451,0.8777 1.01109,0.10358 1.69683,-1.01714 2.55321,-0.91873 1.22933,0.14125 -0.84091,1.64527 -1.19372,1.76464 -1.00365,0.33955 -2.23259,0.23301 -3.12484,-0.35846 -0.26503,-0.17568 -1.23613,-1.14592 -0.48916,-1.36515 m -20.58494,9.30798 c 2.5886,-0.26227 3.16365,3.7774 0.5438,4.12811 -2.76066,0.36956 -3.31615,-3.84722 -0.5438,-4.12811 z"
+       id="path7" /></g></svg>
+Zero-Shot Sentiment</button>
+        </div>
+        <div class="system-stats-section">
+          <p>System Statistics (Updates in every 2000ms)</p>
+          
+          <!-- CPU Utilization Bar -->
+          <div class="stat-item">
+              <div class="stat-label">CPU Utilization</div>
+              <div class="progress-bar">
+                  <div class="progress-fill" id="cpuUtilizationBar"></div>
+                  <div class="progress-text" id="cpuUtilizationText">--%</div>
+              </div>
+          </div>
+          
+          <!-- RAM Utilization Bar -->
+          <div class="stat-item">
+              <div class="stat-label">RAM Utilization</div>
+              <div class="progress-bar">
+                  <div class="progress-fill" id="ramUtilizationBar"></div>
+                  <div class="progress-text" id="ramUtilizationText">--%</div>
+              </div>
+          </div>
+          
+      </div>
+
+      </div>
+    </aside>
+    
+  </main>
+
+  <!-- 
+     HIDDEN TEMPLATES FOR MODALS
+     (One for each ID in MODAL_TEMPLATES, e.g., 'tfidfModal', 'freqModal', etc.)
+     Ensure that each modal has unique configuration fields as required by the analysis type.
+  -->
+  <div class="hidden-template" id="tfidfModal">
+    <div class="modal" data-modal-id="tfidf" role="dialog" aria-labelledby="tfidfModalTitle" aria-modal="true">
+      
+      <div class="modal-header">
+        <h5 id="tfidfModalTitle"><b>TF-IDF Weighted</b> Word Cloud</h5>
+        <div class="modal-controls">
+          <button title="Minimize" class="minimize-btn">—</button>
+          <button title="Maximize/Restore" class="maximize-btn">▢</button>
+          <button title="Close" class="close-btn">×</button>
+        </div>
+      </div>
+      <!-- Resize Handles Positioned Outside Header -->
+      <div class="resize-handle nw"></div>
+      <div class="resize-handle ne"></div>
+      <div class="resize-handle sw"></div>
+      <div class="resize-handle se"></div>
+      <div class="modal-body">
+        <div class="form-section">
+          <h4>Configuration</h4>
+          <label for="tfidf-textColumn"><strong>Choose Text Column</strong></label>
+          <select name="textColumn" id="tfidf-textColumn" required></select>
+
+          <label for="tfidf-maxWords"><strong>Max Words</strong></label>
+          <input type="number" name="maxWords" id="tfidf-maxWords" placeholder="e.g. 500" min="1" required>
+
+          <label for="tfidf-excludeWords"><strong>Exclude Words from WordCloud (Optional)</strong></label>
+          <input type="text" name="excludeWords" id="tfidf-excludeWords" placeholder="e.g. good, bad"
+            style="width: 100%; margin-bottom: 1rem;">
+
+          <label for="tfidf-stopwords"><strong>Remove Stopwords?</strong></label>
+          <input type="checkbox" name="stopwords" id="tfidf-stopwords">
+          <label for="tfidf-stopwords">Yes</label>
+        </div>
+        <div class="preview-section">
+          <!-- Word Cloud Image will be rendered here -->
+          <p>No word cloud generated yet.</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn run-btn">Regenerate</button>
+        <button class="btn download-btn">Download</button>
+        <h5 style="margin: 5px 0;">Modal History Cascade</h5>
+        <div class="checkpoints-list">
+      </div>
+    </div>
+  </div>
+
+  <div class="hidden-template" id="freqModal">
+    <div class="modal" data-modal-id="freq" role="dialog" aria-labelledby="freqModalTitle" aria-modal="true">
+      <div class="modal-header">
+        <h5 id="freqModalTitle"><b>Frequency</b> Word Cloud</h5>
+        <div class="modal-controls">
+          <button title="Minimize" class="minimize-btn">—</button>
+          <button title="Maximize/Restore" class="maximize-btn">▢</button>
+          <button title="Close" class="close-btn">×</button>
+        </div>
+      </div>
+      <!-- Resize Handles Positioned Outside Header -->
+      <div class="resize-handle nw"></div>
+      <div class="resize-handle ne"></div>
+      <div class="resize-handle sw"></div>
+      <div class="resize-handle se"></div>
+      <div class="modal-body">
+        <div class="form-section">
+          <h4>Configuration</h4>
+          <label for="freq-textColumn"><strong>Choose Text Column</strong></label>
+          <select name="textColumn" id="freq-textColumn" required></select>
+
+          <label for="freq-maxWords"><strong>Max Words</strong></label>
+          <input type="number" name="maxWords" id="freq-maxWords" placeholder="e.g. 500" min="1" required>
+
+          <label for="freq-excludeWords"><strong>Exclude Words from WordCloud (Optional)</strong></label>
+          <input type="text" name="excludeWords" id="freq-excludeWords" placeholder="e.g. good, bad"
+            style="width: 100%; margin-bottom: 1rem;">
+
+          <label for="freq-stopwords"><strong>Remove Stopwords?</strong></label>
+          <input type="checkbox" name="stopwords" id="freq-stopwords">
+          <label for="freq-stopwords">Yes</label>
+        </div>
+        <div class="preview-section">
+          <!-- Word Cloud Image will be rendered here -->
+          <p>No word cloud generated yet.</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn run-btn">Regenerate</button>
+        <button class="btn download-btn">Download</button>
+        <h5 style="margin: 5px 0;">Modal History Cascade</h5>
+        <div class="checkpoints-list">
+      </div>
+    </div>
+  </div>
+
+  <div class="hidden-template" id="collocationModal">
+    <div class="modal" data-modal-id="collocation" role="dialog" aria-labelledby="collocationModalTitle"
+      aria-modal="true">
+      <div class="modal-header">
+        <h5 id="collocationModalTitle">Collocation Word Cloud</h5>
+        <div class="modal-controls">
+          <button title="Minimize" class="minimize-btn">—</button>
+          <button title="Maximize/Restore" class="maximize-btn">▢</button>
+          <button title="Close" class="close-btn">×</button>
+        </div>
+      </div>
+      <!-- Resize Handles Positioned Outside Header -->
+      <div class="resize-handle nw"></div>
+      <div class="resize-handle ne"></div>
+      <div class="resize-handle sw"></div>
+      <div class="resize-handle se"></div>
+      <div class="modal-body">
+        <div class="form-section">
+          <h4>Configuration</h4>
+          <label for="collocation-textColumn"><strong>Choose Text Column</strong></label>
+          <select name="textColumn" id="collocation-textColumn" required></select>
+
+          <label for="collocation-maxWords"><strong>Max Words</strong></label>
+          <input type="number" name="maxWords" id="collocation-maxWords" placeholder="e.g. 500" min="1" required>
+
+          <label for="collocation-stopwords"><strong>Remove Stopwords?</strong></label>
+          <input type="checkbox" name="stopwords" id="collocation-stopwords">
+          <label for="collocation-stopwords">Yes</label>
+
+          <label for="collocation-excludeWords"><strong>Exclude Words from WordCloud (Optional)</strong></label>
+          <input type="text" name="excludeWords" id="collocation-excludeWords" placeholder="e.g. good, bad"
+            style="width: 100%; margin-bottom: 1rem;">
+
+          <label for="collocation-windowSize"><strong>Window Size</strong></label>
+          <input type="number" name="windowSize" id="collocation-windowSize" placeholder="e.g. 2" min="1" required>
+        </div>
+        <div class="preview-section">
+          <!-- Collocation Word Cloud Image will be rendered here -->
+          <p>No word cloud generated yet.</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn run-btn">Regenerate</button>
+        <button class="btn download-btn">Download</button>
+        <h5 style="margin: 5px 0;">Modal History Cascade</h5>
+        <div class="checkpoints-list">
+          <!-- Checkpoints will be dynamically appended here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hidden-template" id="semanticwcModal">
+    <div class="modal" data-modal-id="semanticwc" role="dialog" aria-labelledby="semanticwcModalTitle"
+      aria-modal="true">
+      <div class="modal-header">
+        <h5 id="semanticwcModalTitle">Semantic Word Cloud</h5>
+        <div class="modal-controls">
+          <button title="Minimize" class="minimize-btn">—</button>
+          <button title="Maximize/Restore" class="maximize-btn">▢</button>
+          <button title="Close" class="close-btn">×</button>
+        </div>
+      </div>
+      <!-- Resize Handles Positioned Outside Header -->
+      <div class="resize-handle nw"></div>
+      <div class="resize-handle ne"></div>
+      <div class="resize-handle sw"></div>
+      <div class="resize-handle se"></div>
+      <div class="modal-body">
+        <div class="form-section">
+          <h4>Configuration</h4>
+          <label for="semanticwc-textColumn"><strong>Choose Text Column</strong></label>
+          <select name="textColumn" id="semanticwc-textColumn" required></select>
+
+          <label for="semanticwc-query"><strong>Enter Query</strong></label>
+          <input type="text" name="query" id="semanticwc-query" placeholder="e.g. renewable energy" required>
+
+          <label for="semanticwc-embeddingModel"><strong>Select Embedding Model (Change it as per your installed models)</strong></label>
+          <input type="text" name="embeddingModel" id="semanticwc-embeddingModel" placeholder="e.g. all-MiniLM-L6-v2" value="all-MiniLM-L6-v2">
+
+          <label for="semanticwc-maxWords"><strong>Max Words</strong></label>
+          <input type="number" name="maxWords" id="semanticwc-maxWords" placeholder="e.g. 500" min="1">
+
+          <label for="semanticwc-stopwords"><strong>Remove Stopwords?</strong></label>
+          <input type="checkbox" name="stopwords" id="semanticwc-stopwords">
+          <label for="semanticwc-stopwords">Yes</label>
+
+          <label for="semanticwc-excludeWords"><strong>Exclude Words from WordCloud (Optional)</strong></label>
+          <input type="text" name="excludeWords" id="semanticwc-excludeWords" placeholder="e.g. good, bad"
+            style="width: 100%; margin-bottom: 1rem;">
+        </div>
+        <div class="preview-section">
+          <!-- Word Cloud Image will be rendered here -->
+          <p>No word cloud generated yet.</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn run-btn">Generate Word Cloud</button>
+        <button class="btn download-btn">Download Word Cloud</button>
+        <h5 style="margin: 5px 0;">Modal History Cascade</h5>
+        <div class="checkpoints-list">
+      </div>
+    </div>
+  </div>
+
+  <!-- Topic Modeling Modals -->
+  <div class="hidden-template" id="ldaModal">
+    <div class="modal" data-modal-id="lda" role="dialog" aria-labelledby="ldaModalTitle" aria-modal="true">
+      <div class="modal-header">
+        <h5 id="ldaModalTitle">LDA Topic Modeling</h5>
+        <div class="modal-controls">
+          <button title="Minimize" class="minimize-btn">—</button>
+          <button title="Maximize/Restore" class="maximize-btn">▢</button>
+          <button title="Close" class="close-btn">×</button>
+        </div>
+      </div>
+      <!-- Resize Handles Positioned Outside Header -->
+      <div class="resize-handle nw"></div>
+      <div class="resize-handle ne"></div>
+      <div class="resize-handle sw"></div>
+      <div class="resize-handle se"></div>
+      <div class="modal-body">
+        <div class="form-section">
+          <h4>Configuration</h4>
+          <label for="lda-textColumn"><strong>Choose Text Column</strong></label>
+          <select name="textColumn" id="lda-textColumn" required></select>
+
+          <label for="lda-numTopics"><strong>Number of Topics</strong></label>
+          <input type="number" name="numTopics" id="lda-numTopics" placeholder="e.g. 5" min="1" required>
+          <label for="lda-numTopics"><strong>Words per Topic</strong></label>
+          <input type="number" name="wordsPerTopic" id="lda-wordsPerTopic" placeholder="e.g. 5" min="1" required>
+          <label for="lda-randomState"><strong>Random State</strong></label>
+          <input type="number" name="randomState" id="lda-randomState" placeholder="e.g. 42" min="1" required>
+
+          <label for="lda-stopwords"><strong>Remove Stopwords?</strong></label>
+          <input type="checkbox" name="stopwords" id="lda-stopwords">
+          <label for="lda-stopwords">Yes</label>
+        </div>
+        <div class="preview-section">
+          <!-- LDA Topic Modeling Results will be rendered here -->
+          <p>No topic modeling results available.</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn run-btn">Run Topic Modeling</button>
+        <button class="btn download-btn">Download Results</button>
+        <h5 style="margin: 5px 0;">Modal History Cascade</h5>
+        <div class="checkpoints-list">
+      </div>
+    </div>
+  </div>
+
+  <div class="hidden-template" id="nmfModal">
+    <div class="modal" data-modal-id="nmf" role="dialog" aria-labelledby="nmfModalTitle" aria-modal="true">
+      <div class="modal-header">
+        <h5 id="nmfModalTitle">NMF Topic Modeling</h5>
+        <div class="modal-controls">
+          <button title="Minimize" class="minimize-btn">—</button>
+          <button title="Maximize/Restore" class="maximize-btn">▢</button>
+          <button title="Close" class="close-btn">×</button>
+        </div>
+      </div>
+      <!-- Resize Handles Positioned Outside Header -->
+      <div class="resize-handle nw"></div>
+      <div class="resize-handle ne"></div>
+      <div class="resize-handle sw"></div>
+      <div class="resize-handle se"></div>
+      <div class="modal-body">
+        <div class="form-section">
+          <h4>Configuration</h4>
+          <label for="nmf-textColumn"><strong>Choose Text Column</strong></label>
+          <select name="textColumn" id="nmf-textColumn" required></select>
+
+          <label for="nmf-numTopics"><strong>Number of Topics</strong></label>
+          <input type="number" name="numTopics" id="nmf-numTopics" placeholder="e.g. 5" min="1" required>
+          <label for="nmf-wordsPerTopic"><strong>Words per Topic</strong></label>
+          <input type="number" name="wordsPerTopic" id="nmf-wordsPerTopic" placeholder="e.g. 5" min="1" required>
+          <label for="nmf-randomState"><strong>Random State</strong></label>
+          <input type="number" name="randomState" id="nmf-randomState" placeholder="e.g. 42" min="1" required>
+
+
+          <label for="nmf-stopwords"><strong>Remove Stopwords?</strong></label>
+          <input type="checkbox" name="stopwords" id="nmf-stopwords">
+          <label for="nmf-stopwords">Yes</label>
+        </div>
+        <div class="preview-section">
+          <!-- NMF Topic Modeling Results will be rendered here -->
+          <p>No topic modeling results available.</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn run-btn">Run Topic Modeling</button>
+        <button class="btn download-btn">Download Results</button>
+        <h5 style="margin: 5px 0;">Modal History Cascade</h5>
+        <div class="checkpoints-list">
+      </div>
+    </div>
+  </div>
+
+  <div class="hidden-template" id="bertopicModal">
+    <div class="modal" data-modal-id="bertopic" role="dialog" aria-labelledby="bertopicModalTitle" aria-modal="true">
+      <div class="modal-header">
+        <h5 id="bertopicModalTitle">BERTopic Modeling</h5>
+        <div class="modal-controls">
+          <button title="Minimize" class="minimize-btn">—</button>
+          <button title="Maximize/Restore" class="maximize-btn">▢</button>
+          <button title="Close" class="close-btn">×</button>
+        </div>
+      </div>
+      <!-- Resize Handles Positioned Outside Header -->
+      <div class="resize-handle nw"></div>
+      <div class="resize-handle ne"></div>
+      <div class="resize-handle sw"></div>
+      <div class="resize-handle se"></div>
+      <div class="modal-body">
+        <div class="form-section">
+          <h4>Configuration</h4>
+          <label for="bertopic-textColumn"><strong>Choose Text Column</strong></label>
+          <select name="textColumn" id="bertopic-textColumn" required></select>
+
+          <label for="bertopic-numTopics"><strong>Number of Topics</strong></label>
+          <input type="number" name="numTopics" id="bertopic-numTopics" placeholder="e.g. 5" min="1" required>
+          <label for="bertopic-wordsPerTopic"><strong>Words per Topic</strong></label>
+          <input type="number" name="wordsPerTopic" id="bertopic-wordsPerTopic" placeholder="e.g. 5" min="1" required>
+
+          <label for="bertopic-stopwords"><strong>Remove Stopwords?</strong></label>
+          <input type="checkbox" name="stopwords" id="bertopic-stopwords">
+          <label for="bertopic-stopwords">Yes</label>
+
+          <label for="bertopic-embeddingModel"><strong>Embedding Model (Change it as per your installed models)</strong></label>
+          <input type="text" name="embeddingModel" id="bertopic-embeddingModel" placeholder="e.g. all-MiniLM-L6-v2" value="all-MiniLM-L6-v2"
+            required>
+        </div>
+        <div class="preview-section">
+          <!-- BERTopic Modeling Results will be rendered here -->
+          <p>No topic modeling results available.</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn run-btn">Run BERTopic</button>
+        <button class="btn download-btn">Download Results</button>
+        <h5 style="margin: 5px 0;">Modal History Cascade</h5>
+        <div class="checkpoints-list">
+      </div>
+    </div>
+  </div>
+
+  <div class="hidden-template" id="lsaModal">
+    <div class="modal" data-modal-id="lsa" role="dialog" aria-labelledby="lsaModalTitle" aria-modal="true">
+      <div class="modal-header">
+        <h5 id="lsaModalTitle">LSA Topic Modeling</h5>
+        <div class="modal-controls">
+          <button title="Minimize" class="minimize-btn">—</button>
+          <button title="Maximize/Restore" class="maximize-btn">▢</button>
+          <button title="Close" class="close-btn">×</button>
+        </div>
+      </div>
+      <!-- Resize Handles Positioned Outside Header -->
+      <div class="resize-handle nw"></div>
+      <div class="resize-handle ne"></div>
+      <div class="resize-handle sw"></div>
+      <div class="resize-handle se"></div>
+      <div class="modal-body">
+        <div class="form-section">
+          <h4>Configuration</h4>
+          <label for="lsa-textColumn"><strong>Choose Text Column</strong></label>
+          <select name="textColumn" id="lsa-textColumn" required></select>
+
+          <label for="lsa-numTopics"><strong>Number of Topics</strong></label>
+          <input type="number" name="numTopics" id="lsa-numTopics" placeholder="e.g. 5" min="1" required>
+
+          <label for="lsa-wordsPerTopic"><strong>Words per Topic</strong></label>
+          <input type="number" name="wordsPerTopic" id="lsa-wordsPerTopic" placeholder="e.g. 5" min="1" required>
+
+          <label for="lsa-randomState"><strong>Random State</strong></label>
+          <input type="number" name="randomState" id="lsa-randomState" placeholder="e.g. 42" min="1" required>
+
+          <label for="lsa-stopwords"><strong>Remove Stopwords?</strong></label>
+          <input type="checkbox" name="stopwords" id="lsa-stopwords">
+          <label for="lsa-stopwords">Yes</label>
+        </div>
+        <div class="preview-section">
+          <!-- LSA Topic Modeling Results will be rendered here -->
+          <p>No topic modeling results available.</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn run-btn">Run Topic Modeling</button>
+        <button class="btn download-btn">Download Results</button>
+        <h5 style="margin: 5px 0;">Modal History Cascade</h5>
+        <div class="checkpoints-list">
+      </div>
+    </div>
+  </div>
+
+  <div class="hidden-template" id="llmbasedModal">
+    <div class="modal" data-modal-id="llmbased" role="dialog" aria-labelledby="llmbasedModalTitle" aria-modal="true">
+      <div class="modal-header">
+        <h5 id="llmbasedModalTitle">LLM-Based Analysis</h5>
+        <div class="modal-controls">
+          <button title="Minimize" class="minimize-btn">—</button>
+          <button title="Maximize/Restore" class="maximize-btn">▢</button>
+          <button title="Close" class="close-btn">×</button>
+        </div>
+      </div>
+      <!-- Resize Handles Positioned Outside Header -->
+      <div class="resize-handle nw"></div>
+      <div class="resize-handle ne"></div>
+      <div class="resize-handle sw"></div>
+      <div class="resize-handle se"></div>
+      <div class="modal-body">
+        <div class="form-section">
+          <h4>Configuration</h4>
+          <label for="llmbased-llmModel"><strong>Select LLM Model</strong></label>
+          <input type="text" name="llmModel" id="llmbased-llmModel" placeholder="e.g. gpt-4" required>
+
+          <label for="llmbased-textColumn"><strong>Choose Text Column</strong></label>
+          <select name="textColumn" id="llmbased-textColumn" required></select>
+        </div>
+        <div class="preview-section">
+          <!-- LLM-Based Analysis Results will be rendered here -->
+          <p>No analysis results available.</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn run-btn">Run Analysis</button>
+        <button class="btn download-btn">Download Results</button>
+        <h5 style="margin: 5px 0;">Modal History Cascade</h5>
+        <div class="checkpoints-list">
+      </div>
+    </div>
+  </div>
+
+  <!-- Sentiment Analysis Modals -->
+  <div class="hidden-template" id="rulebasedsaModal">
+    <div class="modal" data-modal-id="rulebasedsa" role="dialog" aria-labelledby="rulebasedsaModalTitle"
+      aria-modal="true">
+      <div class="modal-header">
+        <h5 id="rulebasedsaModalTitle">Rule-Based Sentiment Analysis</h5>
+        <div class="modal-controls">
+          <button title="Minimize" class="minimize-btn">—</button>
+          <button title="Maximize/Restore" class="maximize-btn">▢</button>
+          <button title="Close" class="close-btn">×</button>
+        </div>
+      </div>
+      <!-- Resize Handles Positioned Outside Header -->
+      <div class="resize-handle nw"></div>
+      <div class="resize-handle ne"></div>
+      <div class="resize-handle sw"></div>
+      <div class="resize-handle se"></div>
+      <div class="modal-body">
+        <div class="form-section">
+          <h4>Configuration</h4>
+          <label for="rulebasedsa-textColumn"><strong>Choose Text Column</strong></label>
+          <select name="textColumn" id="rulebasedsa-textColumn" required></select>
+
+          <label for="rulebasedsa-ruleBasedModel"><strong>Select Rule-Based Model</strong></label>
+          <select name="ruleBasedModel" id="rulebasedsa-ruleBasedModel" required>
+            <option value="textblob">TextBlob</option>
+            <option value="vader">VADER</option>
+          </select>
+        </div>
+        <div class="preview-section">
+          <!-- Sentiment Analysis Results will be rendered here -->
+          <p>No sentiment analysis results available.</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn run-btn">Run Sentiment Analysis</button>
+        <button class="btn download-btn">Download Results</button>
+        <h5 style="margin: 5px 0;">Modal History Cascade</h5>
+        <div class="checkpoints-list">
+      </div>
+    </div>
+  </div>
+
+  <div class="hidden-template" id="dlbasedsaModal">
+    <div class="modal" data-modal-id="dlbasedsa" role="dialog" aria-labelledby="dlbasedsaModalTitle" aria-modal="true">
+      <div class="modal-header">
+        <h5 id="dlbasedsaModalTitle">Deep Learning-Based Sentiment Analysis</h5>
+        <div class="modal-controls">
+          <button title="Minimize" class="minimize-btn">—</button>
+          <button title="Maximize/Restore" class="maximize-btn">▢</button>
+          <button title="Close" class="close-btn">×</button>
+        </div>
+      </div>
+      <!-- Resize Handles Positioned Outside Header -->
+      <div class="resize-handle nw"></div>
+      <div class="resize-handle ne"></div>
+      <div class="resize-handle sw"></div>
+      <div class="resize-handle se"></div>
+      <div class="modal-body">
+        <div class="form-section">
+          <h4>Configuration</h4>
+          <label for="dlbasedsa-textColumn"><strong>Choose Text Column</strong></label>
+          <select name="textColumn" id="dlbasedsa-textColumn" required></select>
+
+          <label for="dlbasedsa-dlModel"><strong>Select DL-Based Model (Change it accordingly as per your installed models)</strong></label>
+          <input type="text" name="dlModel" id="dlbasedsa-dlModel"
+            placeholder="e.g. distilbert-base-uncased-finetuned-sst-2-english" value="distilbert-base-uncased-finetuned-sst-2-english" required>
+        </div>
+        <div class="preview-section">
+          <!-- DL-Based Sentiment Analysis Results will be rendered here -->
+          <p>No sentiment analysis results available.</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn run-btn">Run Sentiment Analysis</button>
+        <button class="btn download-btn">Download Results</button>
+        <h5 style="margin: 5px 0;">Modal History Cascade</h5>
+        <div class="checkpoints-list">
+      </div>
+    </div>
+  </div>
+
+  <div class="hidden-template" id="absaModal">
+    <div class="modal" data-modal-id="absa" role="dialog" aria-labelledby="absaModalTitle" aria-modal="true">
+      <div class="modal-header">
+        <h5 id="absaModalTitle">Aspect-Based Sentiment Analysis (ABSA)</h5>
+        <div class="modal-controls">
+          <button title="Minimize" class="minimize-btn">—</button>
+          <button title="Maximize/Restore" class="maximize-btn">▢</button>
+          <button title="Close" class="close-btn">×</button>
+        </div>
+      </div>
+      <!-- Resize Handles Positioned Outside Header -->
+      <div class="resize-handle nw"></div>
+      <div class="resize-handle ne"></div>
+      <div class="resize-handle sw"></div>
+      <div class="resize-handle se"></div>
+      <div class="modal-body">
+        <div class="form-section">
+          <h4>Configuration</h4>
+          <label for="absa-textColumn"><strong>Choose Text Column</strong></label>
+          <select name="textColumn" id="absa-textColumn" required></select>
+
+          <label for="absa-aspect"><strong>Aspect Term</strong></label>
+          <input type="text" name="aspect" id="absa-aspect" placeholder="e.g. Service" required>
+
+        <label for="absa-model"><strong>Select Ollama Model</strong></label>
+        <select name="modelName" id="modelSelect" required>
+              <!-- Options will be dynamically populated -->
+          </select>
+        </div>
+        <div class="preview-section">
+          <!-- ABSA Results will be rendered here -->
+          <p>No ABSA results available.</p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn run-btn">Run ABSA</button>
+        <button class="btn download-btn">Download Results</button>
+        <h5 style="margin: 5px 0;">Modal History Cascade</h5>
+        <div class="checkpoints-list">
+      </div>
+    </div>
+  </div>
+
+<!-- Zero-Shot Sentiment Analysis Modal -->
+<div class="hidden-template" id="zeroshotSentimentModal">
+  <div class="modal" data-modal-id="zeroshotSentiment" role="dialog" aria-labelledby="zeroshotSentimentModalTitle" aria-modal="true">
+      <div class="modal-header">
+          <h5 id="zeroshotSentimentModalTitle">Zero-Shot Sentiment Analysis</h5>
+          <div class="modal-controls">
+              <button title="Minimize" class="minimize-btn">—</button>
+              <button title="Maximize/Restore" class="maximize-btn">▢</button>
+              <button title="Close" class="close-btn">×</button>
+          </div>
+      </div>
+      <!-- Resize Handles Positioned Outside Header -->
+      <div class="resize-handle nw"></div>
+      <div class="resize-handle ne"></div>
+      <div class="resize-handle sw"></div>
+      <div class="resize-handle se"></div>
+      <div class="modal-body">
+          <div class="form-section">
+              <h4>Configuration</h4>
+              <label for="zeroshotSentiment-textColumn"><strong>Choose Text Column</strong></label>
+              <select name="textColumn" id="zeroshotSentiment-textColumn" required></select>
+              <label for="zeroshotSentiment-model"><strong>Select Ollama Model</strong></label>
+              <select name="modelName" id="modelSelect" required>
+                  <!-- Options will be dynamically populated -->
+              </select>
+          </div>
+          <div class="preview-section">
+              <!-- Sentiment Analysis Results will be rendered here -->
+              <p>No sentiment analysis results available.</p>
+          </div>
+      </div>
+
+      <div class="modal-footer">
+          <button class="btn run-btn">Run Sentiment Analysis</button>
+          <button class="btn download-btn">Download Results</button>
+          <h5 style="margin: 5px 0;">Modal History Cascade</h5>
+          <div class="checkpoints-list">
+      </div>
+  </div>
+</div>
+
+  <!-- =========================
+       Link to External JS
+  ========================= -->
+  <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+</body>
+
+</html>

@@ -1,0 +1,13 @@
+Flask
+pandas
+numpy
+nltk
+psutil
+wordcloud
+scikit-learn
+bertopic
+sentence-transformers
+textblob
+transformers
+openpyxl
+ollama
