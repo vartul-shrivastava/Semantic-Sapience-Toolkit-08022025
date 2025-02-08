@@ -464,6 +464,41 @@ async function exportProject() {
     // Display the models in an alert or a better UI component
     alert(`Installed Ollama AI Models:\n\n${modelList}`);
   }
+
+
+
+  /**
+ * Shows a loading overlay covering only the specified modal.
+ * @param {HTMLElement} modalEl - The modal element to cover.
+ */
+function showModalLoading(modalEl) {
+    // Check if a modal loading overlay already exists; if not, create it.
+    let loadingOverlay = modalEl.querySelector('.modal-loading-overlay');
+    if (!loadingOverlay) {
+        loadingOverlay = document.createElement('div');
+        loadingOverlay.className = 'modal-loading-overlay';
+        // Optionally, add inner HTML with a spinner and message.
+        loadingOverlay.innerHTML = '<div class="modal-spinner"></div><p style="margin-top: 1rem;">Processing...<br>Do not minimize this tab until operation is under process</p>';
+        // Ensure the modal's container has relative positioning for absolute positioning to work.
+        if (window.getComputedStyle(modalEl).position === 'static') {
+            modalEl.style.position = 'relative';
+        }
+        modalEl.appendChild(loadingOverlay);
+    }
+    loadingOverlay.style.display = 'flex';
+}
+
+/**
+ * Hides the loading overlay from the specified modal.
+ * @param {HTMLElement} modalEl - The modal element to remove the overlay from.
+ */
+function hideModalLoading(modalEl) {
+    const loadingOverlay = modalEl.querySelector('.modal-loading-overlay');
+    if (loadingOverlay) {
+        loadingOverlay.style.display = 'none';
+    }
+}
+
 /**
  * Collect and compile the current project configuration.
  * @returns {Object} - The project configuration.
@@ -1264,8 +1299,6 @@ function restoreModal(modalId) {
             option.textContent = col;
             textColumnSelect.appendChild(option);
         });
-
-        // Set the previously chosen column
         if (entry.chosenCol) {
             textColumnSelect.value = entry.chosenCol;
         }
@@ -1277,18 +1310,18 @@ function restoreModal(modalId) {
         previewSection.innerHTML = entry.previewContent;
     }
 
-    // Append to the backdrop
+    // Append the modal to the backdrop
     modalBackdrop.appendChild(clonedModal);
     modalBackdrop.style.display = 'flex';
 
     // Initialize draggable and resizable functionalities
     initializeModalInteractions(clonedModal);
+    randomizeModalPosition(clonedModal);
 
     // Attach event listeners to control buttons
     const closeButton = clonedModal.querySelector('.close-btn');
     const minimizeButton = clonedModal.querySelector('.minimize-btn');
     const maximizeButton = clonedModal.querySelector('.maximize-btn');
-    randomizeModalPosition(clonedModal);
     closeButton.onclick = () => closeModal(clonedModal);
     minimizeButton.onclick = () => minimizeModal(clonedModal, entry.methodId);
     maximizeButton.onclick = () => toggleMaximizeModal(clonedModal);
@@ -1296,7 +1329,6 @@ function restoreModal(modalId) {
     // Attach event listeners to footer buttons based on method type
     const runButton = clonedModal.querySelector('.modal-footer .btn.run-btn');
     const downloadButton = clonedModal.querySelector('.modal-footer .btn.download-btn');
-
     if (runButton && downloadButton) {
         switch (entry.methodId) {
             case 'tfidf':
@@ -1336,15 +1368,34 @@ function restoreModal(modalId) {
         });
     }
 
-    // Remove the tray link
+    // Remove the tray link and update modal state to 'open'
     if (entry.trayLink) {
         entry.trayLink.remove();
         delete allModals[modalId].trayLink;
     }
-
-    // Update modal state to 'open'
     allModals[modalId].state = 'open';
+
+    // Bring the restored modal to the top (update its z-index)
+    bringModalToFront(clonedModal);
 }
+/**
+ * Bring the specified modal element to the front by updating its z-index.
+ * @param {HTMLElement} modalEl - The modal element.
+ */
+function bringModalToFront(modalEl) {
+    // Find the highest z-index among all modals
+    const allModalEls = document.querySelectorAll('.modal');
+    let highestZIndex = 0;
+    allModalEls.forEach(modal => {
+        const zIndex = parseInt(window.getComputedStyle(modal).zIndex, 10) || 0;
+        if (zIndex > highestZIndex) {
+            highestZIndex = zIndex;
+        }
+    });
+    // Set the given modal's z-index to be one more than the highest found
+    modalEl.style.zIndex = highestZIndex + 1;
+}
+
 
 /**
  * Toggle maximization of a modal.
@@ -1415,7 +1466,7 @@ async function regenerateWordCloud(modalEl, methodId) {
             payload.windowSize = parseInt(fields.windowSize) || 2;
         }
 
-        showLoading();
+        showModalLoading(modalEl);
         const response = await fetch("/process/wordcloud", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -1423,7 +1474,7 @@ async function regenerateWordCloud(modalEl, methodId) {
         });
 
         const data = await response.json();
-        hideLoading();
+        hideModalLoading(modalEl);
 
         if (!response.ok) {
             alert(data.error || "Error generating word cloud.");
@@ -1452,7 +1503,7 @@ async function regenerateWordCloud(modalEl, methodId) {
             alert(data.error || "No image returned from server.");
         }
     } catch (error) {
-        hideLoading();
+        hideModalLoading(modalEl);
         console.error(error);
         alert("Error generating word cloud: " + error.message);
     }
@@ -1502,7 +1553,7 @@ async function generateSemanticWordCloud(modalEl) {
             excludeWords: fields.excludeWords ? fields.excludeWords.split(",").map(word => word.trim()).filter(word => word) : []
         };
 
-        showLoading();
+        showModalLoading(modalEl);
         const response = await fetch("/process/semantic_wordcloud", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -1510,7 +1561,7 @@ async function generateSemanticWordCloud(modalEl) {
         });
 
         const data = await response.json();
-        hideLoading();
+        hideModalLoading(modalEl);
 
         if (!response.ok) {
             alert(data.error || "Error generating semantic word cloud.");
@@ -1539,7 +1590,7 @@ async function generateSemanticWordCloud(modalEl) {
             alert(data.error || "No image returned from server.");
         }
     } catch (error) {
-        hideLoading();
+        hideModalLoading(modalEl);
         console.error(error);
         alert("Error generating semantic word cloud: " + error.message);
     }
@@ -1580,7 +1631,7 @@ async function runTopicModeling(modalEl, methodId) {
         payload.step = parseInt(fields.step) || 1;
       }
   
-      showLoading();
+      showModalLoading(modalEl);
       const response = await fetch("/process/topic_modeling", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1588,7 +1639,7 @@ async function runTopicModeling(modalEl, methodId) {
       });
   
       const data = await response.json();
-      hideLoading();
+      hideModalLoading(modalEl);
   
       if (!response.ok) {
         alert(data.error || "Error running topic modeling.");
@@ -1649,7 +1700,7 @@ async function runTopicModeling(modalEl, methodId) {
       };
       createCheckpoint(modalEl, checkpointConfig, outputData);
     } catch (error) {
-      hideLoading();
+        hideModalLoading(modalEl);
       console.error(error);
       alert("Error running topic modeling: " + error.message);
     }
@@ -1722,7 +1773,7 @@ async function runSentimentAnalysis(modalEl, methodId) {
                 console.warn(`No additional fields defined for method ID: ${methodId}`);
         }
 
-        showLoading();
+        showModalLoading(modalEl);
 
         const endpointMap = {
             'rulebasedsa': "/process/sentiment",
@@ -1740,7 +1791,7 @@ async function runSentimentAnalysis(modalEl, methodId) {
         });
 
         const data = await response.json();
-        hideLoading();
+        hideModalLoading(modalEl);
 
         if (!response.ok) {
             alert(data.error || "Error running sentiment analysis.");
@@ -1775,7 +1826,7 @@ async function runSentimentAnalysis(modalEl, methodId) {
         };
         createCheckpoint(modalEl, checkpointConfig, outputData);
     } catch (error) {
-        hideLoading();
+        hideModalLoading(modalEl);
         console.error(error);
         alert("Error running sentiment analysis: " + error.message);
     }
