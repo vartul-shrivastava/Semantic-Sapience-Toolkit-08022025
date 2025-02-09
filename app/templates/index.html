@@ -952,7 +952,7 @@ Zero-Shot Sentiment</button>
       <div class="modal-footer">
         <button class="btn run-btn">Regenerate</button>
         <button class="btn download-btn">Download</button>
-        <h5 style="margin: 5px 0;">Modal History Cascade</h5>
+        <p style="margin: 5px 0;font-size:12px">Modal History <br> Cascade</p>
         <div class="checkpoints-list">
       </div>
     </div>
@@ -999,7 +999,7 @@ Zero-Shot Sentiment</button>
       <div class="modal-footer">
         <button class="btn run-btn">Regenerate</button>
         <button class="btn download-btn">Download</button>
-        <h5 style="margin: 5px 0;">Modal History Cascade</h5>
+        <p style="margin: 5px 0;font-size:12px">Modal History <br> Cascade</p>
         <div class="checkpoints-list">
       </div>
     </div>
@@ -1050,7 +1050,7 @@ Zero-Shot Sentiment</button>
       <div class="modal-footer">
         <button class="btn run-btn">Regenerate</button>
         <button class="btn download-btn">Download</button>
-        <h5 style="margin: 5px 0;">Modal History Cascade</h5>
+        <p style="margin: 5px 0;font-size:12px">Modal History <br> Cascade</p>
         <div class="checkpoints-list">
           <!-- Checkpoints will be dynamically appended here -->
         </div>
@@ -1106,7 +1106,7 @@ Zero-Shot Sentiment</button>
       <div class="modal-footer">
         <button class="btn run-btn">Generate Word Cloud</button>
         <button class="btn download-btn">Download Word Cloud</button>
-        <h5 style="margin: 5px 0;">Modal History Cascade</h5>
+        <p style="margin: 5px 0;font-size:12px">Modal History <br> Cascade</p>
         <div class="checkpoints-list">
       </div>
     </div>
@@ -1153,7 +1153,7 @@ Zero-Shot Sentiment</button>
              You can add a bit of JS to toggle the display; here we set inline style to hide by default -->
         <div id="lda-coherence-params" style="display: none; margin-left: 1rem;">
           <label for="lda-min_topics"><strong>Min Topics</strong></label>
-          <input type="number" name="min_topics" id="lda-min_topics" placeholder="e.g. 2" min="1">
+          <input type="number" name="min_topics" id="lda-min_topics" placeholder="e.g. 1" min="1">
           <label for="lda-max_topics"><strong>Max Topics</strong></label>
           <input type="number" name="max_topics" id="lda-max_topics" placeholder="e.g. 10" min="1">
           <label for="lda-step"><strong>Step</strong></label>
@@ -1169,7 +1169,7 @@ Zero-Shot Sentiment</button>
       <div class="modal-footer">
         <button class="btn run-btn">Run Topic Modeling</button>
         <button class="btn download-btn">Download Results</button>
-        <h5 style="margin: 5px 0;">Modal History Cascade</h5>
+        <p style="margin: 5px 0;font-size:12px">Modal History <br> Cascade</p>
         <div class="checkpoints-list">
       </div>
     </div>
@@ -1217,7 +1217,7 @@ Zero-Shot Sentiment</button>
           <!-- Coherence Parameters (hidden by default) -->
           <div id="nmf-coherence-params" style="display: none; margin-left: 1rem;">
             <label for="nmf-min_topics"><strong>Min Topics</strong></label>
-            <input type="number" name="min_topics" id="nmf-min_topics" placeholder="e.g. 2" min="1">
+            <input type="number" name="min_topics" id="nmf-min_topics" placeholder="e.g. 1" min="1">
             <label for="nmf-max_topics"><strong>Max Topics</strong></label>
             <input type="number" name="max_topics" id="nmf-max_topics" placeholder="e.g. 10" min="1">
             <label for="nmf-step"><strong>Step</strong></label>
@@ -1232,7 +1232,7 @@ Zero-Shot Sentiment</button>
       <div class="modal-footer">
         <button class="btn run-btn">Run Topic Modeling</button>
         <button class="btn download-btn">Download Results</button>
-        <h5 style="margin: 5px 0;">Modal History Cascade</h5>
+        <p style="margin: 5px 0;font-size:12px">Modal History <br> Cascade</p>
         <div class="checkpoints-list">
         </div>
       </div>
@@ -1283,7 +1283,7 @@ Zero-Shot Sentiment</button>
           <!-- Coherence Parameters (hidden by default) -->
           <div id="lsa-coherence-params" style="display: none; margin-left: 1rem;">
             <label for="lsa-min_topics"><strong>Min Topics</strong></label>
-            <input type="number" name="min_topics" id="lsa-min_topics" placeholder="e.g. 2" min="1">
+            <input type="number" name="min_topics" id="lsa-min_topics" placeholder="e.g. 1" min="1">
             <label for="lsa-max_topics"><strong>Max Topics</strong></label>
             <input type="number" name="max_topics" id="lsa-max_topics" placeholder="e.g. 10" min="1">
             <label for="lsa-step"><strong>Step</strong></label>
@@ -1298,7 +1298,7 @@ Zero-Shot Sentiment</button>
       <div class="modal-footer">
         <button class="btn run-btn">Run Topic Modeling</button>
         <button class="btn download-btn">Download Results</button>
-        <h5 style="margin: 5px 0;">Modal History Cascade</h5>
+        <p style="margin: 5px 0;font-size:12px">Modal History <br> Cascade</p>
         <div class="checkpoints-list">
         </div>
       </div>
@@ -1328,10 +1328,13 @@ Zero-Shot Sentiment</button>
           <label for="bertopic-textColumn"><strong>Choose Text Column</strong></label>
           <select name="textColumn" id="bertopic-textColumn" required></select>
 
-          <label for="bertopic-numTopics"><strong>Number of Topics</strong></label>
+          <label for="bertopic-numTopics"><strong>Reduce Topics to? (Only works if BERTopic produces more topic than reduced number)</strong></label>
           <input type="number" name="numTopics" id="bertopic-numTopics" placeholder="e.g. 5" min="1" required>
           <label for="bertopic-wordsPerTopic"><strong>Words per Topic</strong></label>
           <input type="number" name="wordsPerTopic" id="bertopic-wordsPerTopic" placeholder="e.g. 5" min="1" required>
+
+          <label for="bertopic-randomState"><strong>UMAP Random State</strong></label>
+          <input type="number" name="randomState" id="bertopic" placeholder="e.g. 42" min="1" required>
 
           <label for="bertopic-stopwords"><strong>Remove Stopwords?</strong></label>
           <input type="checkbox" name="stopwords" id="bertopic-stopwords">
@@ -1350,7 +1353,7 @@ Zero-Shot Sentiment</button>
       <div class="modal-footer">
         <button class="btn run-btn">Run BERTopic</button>
         <button class="btn download-btn">Download Results</button>
-        <h5 style="margin: 5px 0;">Modal History Cascade</h5>
+        <p style="margin: 5px 0;font-size:12px">Modal History <br> Cascade</p>
         <div class="checkpoints-list">
       </div>
     </div>
@@ -1388,7 +1391,7 @@ Zero-Shot Sentiment</button>
       <div class="modal-footer">
         <button class="btn run-btn">Run Analysis</button>
         <button class="btn download-btn">Download Results</button>
-        <h5 style="margin: 5px 0;">Modal History Cascade</h5>
+        <p style="margin: 5px 0;font-size:12px">Modal History <br> Cascade</p>
         <div class="checkpoints-list">
       </div>
     </div>
@@ -1432,7 +1435,7 @@ Zero-Shot Sentiment</button>
       <div class="modal-footer">
         <button class="btn run-btn">Run Sentiment Analysis</button>
         <button class="btn download-btn">Download Results</button>
-        <h5 style="margin: 5px 0;">Modal History Cascade</h5>
+        <p style="margin: 5px 0;font-size:12px">Modal History <br> Cascade</p>
         <div class="checkpoints-list">
       </div>
     </div>
@@ -1472,7 +1475,7 @@ Zero-Shot Sentiment</button>
       <div class="modal-footer">
         <button class="btn run-btn">Run Sentiment Analysis</button>
         <button class="btn download-btn">Download Results</button>
-        <h5 style="margin: 5px 0;">Modal History Cascade</h5>
+        <p style="margin: 5px 0;font-size:12px">Modal History <br> Cascade</p>
         <div class="checkpoints-list">
       </div>
     </div>
@@ -1516,7 +1519,7 @@ Zero-Shot Sentiment</button>
       <div class="modal-footer">
         <button class="btn run-btn">Run ABSA</button>
         <button class="btn download-btn">Download Results</button>
-        <h5 style="margin: 5px 0;">Modal History Cascade</h5>
+        <p style="margin: 5px 0;font-size:12px">Modal History <br> Cascade</p>
         <div class="checkpoints-list">
       </div>
     </div>
@@ -1557,7 +1560,7 @@ Zero-Shot Sentiment</button>
       <div class="modal-footer">
           <button class="btn run-btn">Run Sentiment Analysis</button>
           <button class="btn download-btn">Download Results</button>
-          <h5 style="margin: 5px 0;">Modal History Cascade</h5>
+          <p style="margin: 5px 0;font-size:12px">Modal History <br> Cascade</p>
           <div class="checkpoints-list">
       </div>
   </div>

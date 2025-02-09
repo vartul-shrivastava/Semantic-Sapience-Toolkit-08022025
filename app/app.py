@@ -5,7 +5,7 @@ import logging
 import re
 import subprocess
 import time
-
+from umap import UMAP
 import pandas as pd
 import matplotlib
 matplotlib.use('Agg')
@@ -233,6 +233,24 @@ def import_project():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
+import base64
+import io
+import numpy as np
+import matplotlib.pyplot as plt
+from flask import request, jsonify
+from sklearn.decomposition import PCA, TruncatedSVD
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.decomposition import LatentDirichletAllocation, NMF
+from tqdm import tqdm
+import nltk
+from nltk.corpus import stopwords
+from gensim.corpora.dictionary import Dictionary
+from gensim.models.coherencemodel import CoherenceModel
+# For BERTopic (if needed)
+from sentence_transformers import SentenceTransformer
+from umap import UMAP
+from bertopic import BERTopic
+
 @app.route('/process/topic_modeling', methods=['POST'])
 def process_topic_modeling():
     params = request.get_json()
@@ -272,6 +290,7 @@ def process_topic_modeling():
     if not texts:
         return jsonify({"error": "No valid rows in dataset."}), 400
 
+    # Use NLTK stopwords if requested
     user_stops = set(stopwords.words("english")) if remove_sw else set()
     topic_labels = []
     clustering_plot_data_uri = None
@@ -333,7 +352,8 @@ def process_topic_modeling():
                 embedding_model_name = "all-MiniLM-L6-v2"
             embedding_model = SentenceTransformer(embedding_model_name)
             embeddings = embedding_model.encode(texts_processed, show_progress_bar=False)
-            topic_model = BERTopic(verbose=False, nr_topics=num_topics)
+            umap_model = UMAP(random_state=random_state)
+            topic_model = BERTopic(verbose=False, nr_topics=num_topics, min_topic_size=5, umap_model=umap_model)
             topics_result, _ = topic_model.fit_transform(texts_processed, embeddings)
             topic_labels = []
             for t_id in sorted(set(topics_result) - {-1}):
@@ -360,7 +380,7 @@ def process_topic_modeling():
         else:
             return jsonify({"error": f"Unsupported method '{method}'."}), 400
 
-        # For LDA, NMF, or LSA, generate a clustering plot using doc_topics
+        # For LDA, NMF, or LSA, generate a clustering plot using doc_topics (if available)
         if method in ["lda", "nmf", "lsa"] and doc_topics is not None:
             from sklearn.decomposition import PCA
             pca = PCA(n_components=2)
@@ -380,8 +400,154 @@ def process_topic_modeling():
             clustering_plot_b64 = base64.b64encode(buf.read()).decode("utf-8")
             clustering_plot_data_uri = f"data:image/png;base64,{clustering_plot_b64}"
 
-        # (Optional) Coherence analysis code omitted for brevity...
-        # Build response data:
+        # --------------------- Coherence Analysis with Additional Metrics --------------------- #
+        if coherence_analysis and method in ["lda", "nmf", "lsa"]:
+            min_topics = int(params.get("min_topics", 1))
+            max_topics = int(params.get("max_topics", 10))
+            step = int(params.get("step", 1))
+            topics_range = list(range(min_topics, max_topics + 1, step))
+            coherence_scores = []
+            # Lists for additional metrics:
+            perplexity_scores = []  # only for LDA
+            sse_scores = []         # for NMF and LSA
+
+            # Tokenize texts for coherence computation.
+            tokenized_texts = [nltk.word_tokenize(text.lower()) for text in texts]
+            dictionary = Dictionary(tokenized_texts)
+            corpus = [dictionary.doc2bow(text) for text in tokenized_texts]
+
+            for k in tqdm(topics_range, desc="Coherence analysis", unit="topic"):
+                if method == "lda":
+                    vectorizer = CountVectorizer(
+                        stop_words=list(user_stops) if remove_sw else None,
+                        token_pattern=r"(?u)\b\w+\b"
+                    )
+                    X = vectorizer.fit_transform(texts)
+                    vocab = vectorizer.get_feature_names_out()
+                    model_k = LatentDirichletAllocation(n_components=k, random_state=random_state)
+                    model_k.fit(X)
+                    topics = []
+                    for comp in model_k.components_:
+                        top_indices = comp.argsort()[::-1][:words_per_topic]
+                        top_words = [vocab[i] for i in top_indices]
+                        topics.append(top_words)
+                    # Compute perplexity for LDA
+                    perplexity_scores.append(model_k.perplexity(X))
+                elif method == "nmf":
+                    vectorizer = TfidfVectorizer(
+                        stop_words=list(user_stops) if remove_sw else None,
+                        token_pattern=r"(?u)\b\w+\b"
+                    )
+                    X = vectorizer.fit_transform(texts)
+                    vocab = vectorizer.get_feature_names_out()
+                    model_k = NMF(n_components=k, random_state=random_state)
+                    model_k.fit(X)
+                    topics = []
+                    for comp in model_k.components_:
+                        top_indices = comp.argsort()[::-1][:words_per_topic]
+                        top_words = [vocab[i] for i in top_indices]
+                        topics.append(top_words)
+                    # Use the model's reconstruction error as SSE metric.
+                    sse_scores.append(model_k.reconstruction_err_)
+                elif method == "lsa":
+                    vectorizer = TfidfVectorizer(
+                        stop_words=list(user_stops) if remove_sw else None,
+                        token_pattern=r"(?u)\b\w+\b"
+                    )
+                    X = vectorizer.fit_transform(texts)
+                    vocab = vectorizer.get_feature_names_out()
+                    model_k = TruncatedSVD(n_components=k, random_state=random_state)
+                    model_k.fit(X)
+                    topics = []
+                    for row in model_k.components_:
+                        top_indices = row.argsort()[::-1][:words_per_topic]
+                        top_words = [vocab[i] for i in top_indices]
+                        topics.append(top_words)
+                    # For LSA, compute SSE by reconstructing the TF-IDF matrix.
+                    if hasattr(X, "toarray"):
+                        X_dense = X.toarray()
+                    else:
+                        X_dense = X
+                    X_approx = model_k.inverse_transform(model_k.transform(X))
+                    sse = np.sum((X_dense - X_approx) ** 2)
+                    sse_scores.append(sse)
+
+                coherence_model = CoherenceModel(topics=topics, texts=tokenized_texts,
+                                                  dictionary=dictionary, coherence='c_v')
+                score = coherence_model.get_coherence()
+                coherence_scores.append(score)
+
+            best_index = np.argmax(coherence_scores)
+            best_topic_num = topics_range[best_index]
+            best_coherence = coherence_scores[best_index]
+
+            # Generate coherence plot.
+            plt.figure(figsize=(8, 6))
+            plt.plot(topics_range, coherence_scores, marker='o')
+            plt.xlabel("Number of Topics")
+            plt.ylabel("Coherence Score (c_v)")
+            plt.title(f"Coherence Analysis for {method.upper()}")
+            plt.grid(True)
+            buf = io.BytesIO()
+            plt.savefig(buf, format='png')
+            plt.close()
+            buf.seek(0)
+            img_b64 = base64.b64encode(buf.read()).decode("utf-8")
+            coherence_plot = f"data:image/png;base64,{img_b64}"
+
+            response_data = {
+                "message": f"{method.upper()} topic modeling completed with coherence analysis.",
+                "topics": topic_labels,
+                "coherence_analysis": {
+                    "coherence_plot": coherence_plot,
+                    "best_topic": best_topic_num,
+                    "best_coherence": best_coherence,
+                    "topics_range": topics_range,
+                    "coherence_scores": coherence_scores
+                }
+            }
+            # Add perplexity analysis for LDA.
+            if method == "lda":
+                plt.figure(figsize=(8, 6))
+                plt.plot(topics_range, perplexity_scores, marker='o')
+                plt.xlabel("Number of Topics")
+                plt.ylabel("Perplexity")
+                plt.title("Perplexity Analysis for LDA")
+                plt.grid(True)
+                buf = io.BytesIO()
+                plt.savefig(buf, format='png')
+                plt.close()
+                buf.seek(0)
+                perplexity_plot_b64 = base64.b64encode(buf.read()).decode("utf-8")
+                perplexity_plot = f"data:image/png;base64,{perplexity_plot_b64}"
+                response_data["perplexity_analysis"] = {
+                    "perplexity_plot": perplexity_plot,
+                    "perplexity_scores": perplexity_scores
+                }
+            # Add SSE analysis for NMF or LSA.
+            elif method in ["nmf", "lsa"]:
+                plt.figure(figsize=(8, 6))
+                plt.plot(topics_range, sse_scores, marker='o')
+                plt.xlabel("Number of Topics")
+                plt.ylabel("SSE")
+                plt.title(f"SSE Analysis for {method.upper()}")
+                plt.grid(True)
+                buf = io.BytesIO()
+                plt.savefig(buf, format='png')
+                plt.close()
+                buf.seek(0)
+                sse_plot_b64 = base64.b64encode(buf.read()).decode("utf-8")
+                sse_plot = f"data:image/png;base64,{sse_plot_b64}"
+                response_data["sse_analysis"] = {
+                    "sse_plot": sse_plot,
+                    "sse_scores": sse_scores
+                }
+
+            if clustering_plot_data_uri:
+                response_data["clustering_plot"] = clustering_plot_data_uri
+            return jsonify(response_data), 200
+
+        # Build response data (if no coherence analysis was requested):
         response_data = {
             "message": f"{method.upper()} topic modeling completed.",
             "topics": topic_labels
