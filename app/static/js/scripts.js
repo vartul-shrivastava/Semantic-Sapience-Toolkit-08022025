@@ -1143,88 +1143,107 @@ async function generateSemanticWordCloud(modalEl) {
 }
 
 async function runTopicModeling(modalEl, methodId) {
-  try {
-    const fields = getModalFields(modalEl);
-    if (!fields.textColumn) {
-      alert("Please select a text column.");
-      return;
-    }
-    const payload = {
-      method: methodId,
-      base64: currentFileBase64,
-      column: fields.textColumn,
-      numTopics: parseInt(fields.numTopics) || 5,
-      wordsPerTopic: parseInt(fields.wordsPerTopic) || 5,
-      randomState: parseInt(fields.randomState) || 42,
-      stopwords: !!fields.stopwords,
-      embeddingModel: fields.embeddingModel || ""
-    };
-    if (fields.coherence_analysis === "on" || fields.coherence_analysis === true) {
-      payload.coherence_analysis = true;
-      payload.min_topics = parseInt(fields.min_topics) || 2;
-      payload.max_topics = parseInt(fields.max_topics) || (parseInt(fields.numTopics) || 5);
-      payload.step = parseInt(fields.step) || 1;
-    }
-    showModalLoading(modalEl);
-    const response = await fetch("/process/topic_modeling", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    const data = await response.json();
-    hideModalLoading(modalEl);
-    if (!response.ok) {
-      alert(data.error || "Error running topic modeling.");
-      return;
-    }
-    const previewSection = modalEl.querySelector(".preview-section");
-    previewSection.innerHTML = "";
-    if (data.topics && Array.isArray(data.topics) && data.topics.length > 0) {
-      const heading = document.createElement("h3");
-      heading.textContent = "Extracted Topics:";
-      previewSection.appendChild(heading);
-      const list = document.createElement("ul");
-      data.topics.forEach((topic, index) => {
-        const listItem = document.createElement("li");
-        listItem.textContent = `Topic ${index + 1}: ${topic}`;
-        list.appendChild(listItem);
+    try {
+      const fields = getModalFields(modalEl);
+      if (!fields.textColumn) {
+        alert("Please select a text column.");
+        return;
+      }
+      const payload = {
+        method: methodId,
+        base64: currentFileBase64,
+        column: fields.textColumn,
+        numTopics: parseInt(fields.numTopics) || 5,
+        wordsPerTopic: parseInt(fields.wordsPerTopic) || 5,
+        randomState: parseInt(fields.randomState) || 42,
+        stopwords: !!fields.stopwords,
+        embeddingModel: fields.embeddingModel || ""
+      };
+      if (fields.coherence_analysis === "on" || fields.coherence_analysis === true) {
+        payload.coherence_analysis = true;
+        payload.min_topics = parseInt(fields.min_topics) || 2;
+        payload.max_topics = parseInt(fields.max_topics) || (parseInt(fields.numTopics) || 5);
+        payload.step = parseInt(fields.step) || 1;
+      }
+      showModalLoading(modalEl);
+      const response = await fetch("/process/topic_modeling", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
       });
-      previewSection.appendChild(list);
-    } else {
-      const message = document.createElement("p");
-      message.textContent = "No topics were extracted.";
-      previewSection.appendChild(message);
+      const data = await response.json();
+      hideModalLoading(modalEl);
+      if (!response.ok) {
+        alert(data.error || "Error running topic modeling.");
+        return;
+      }
+      const previewSection = modalEl.querySelector(".preview-section");
+      previewSection.innerHTML = "";
+  
+      // Display extracted topics
+      if (data.topics && Array.isArray(data.topics) && data.topics.length > 0) {
+        const heading = document.createElement("h3");
+        heading.textContent = "Extracted Topics:";
+        previewSection.appendChild(heading);
+        const list = document.createElement("ul");
+        data.topics.forEach((topic, index) => {
+          const listItem = document.createElement("li");
+          listItem.textContent = `Topic ${index + 1}: ${topic}`;
+          list.appendChild(listItem);
+        });
+        previewSection.appendChild(list);
+      } else {
+        const message = document.createElement("p");
+        message.textContent = "No topics were extracted.";
+        previewSection.appendChild(message);
+      }
+  
+      // Display coherence analysis plot if available
+      if (data.coherence_analysis) {
+        const coherenceDiv = document.createElement("div");
+        coherenceDiv.className = "coherence-analysis";
+        coherenceDiv.style.marginTop = "1rem";
+        const plotHeading = document.createElement("h4");
+        plotHeading.textContent = "Coherence Analysis";
+        coherenceDiv.appendChild(plotHeading);
+        const plotImg = document.createElement("img");
+        plotImg.src = data.coherence_analysis.coherence_plot;
+        plotImg.alt = "Coherence Analysis Plot";
+        plotImg.style.maxWidth = "100%";
+        coherenceDiv.appendChild(plotImg);
+        const bestInfo = document.createElement("p");
+        bestInfo.textContent = `Best Coherence: ${data.coherence_analysis.best_coherence.toFixed(4)} at ${data.coherence_analysis.best_topic} topics.`;
+        coherenceDiv.appendChild(bestInfo);
+        previewSection.appendChild(coherenceDiv);
+      }
+  
+      // NEW: Display clustering plot if available
+      if (data.clustering_plot) {
+        const clusteringHeading = document.createElement("h5");
+        clusteringHeading.textContent = "Document Clustering (PC1 vs PC2):";
+        clusteringHeading.style.marginTop = "1rem";
+        previewSection.appendChild(clusteringHeading);
+        const clusteringImg = document.createElement("img");
+        clusteringImg.src = data.clustering_plot;
+        clusteringImg.alt = "Clustering Plot (PC1 vs PC2)";
+        clusteringImg.style.maxWidth = "100%";
+        previewSection.appendChild(clusteringImg);
+      }
+  
+      const outputData = previewSection.innerHTML;
+      const checkpointConfig = {
+        methodId: methodId,
+        fields: fields
+      };
+      createCheckpoint(modalEl, checkpointConfig, outputData);
+    } catch (error) {
+      hideModalLoading(modalEl);
+      console.error(error);
+      alert("Error running topic modeling: " + error.message);
     }
-    if (data.coherence_analysis) {
-      const coherenceDiv = document.createElement("div");
-      coherenceDiv.className = "coherence-analysis";
-      coherenceDiv.style.marginTop = "1rem";
-      const plotHeading = document.createElement("h4");
-      plotHeading.textContent = "Coherence Analysis";
-      coherenceDiv.appendChild(plotHeading);
-      const plotImg = document.createElement("img");
-      plotImg.src = data.coherence_analysis.coherence_plot;
-      plotImg.alt = "Coherence Analysis Plot";
-      plotImg.style.maxWidth = "100%";
-      coherenceDiv.appendChild(plotImg);
-      const bestInfo = document.createElement("p");
-      bestInfo.textContent = `Best Coherence: ${data.coherence_analysis.best_coherence.toFixed(4)} at ${data.coherence_analysis.best_topic} topics.`;
-      coherenceDiv.appendChild(bestInfo);
-      previewSection.appendChild(coherenceDiv);
-    }
-    const outputData = previewSection.innerHTML;
-    const checkpointConfig = {
-      methodId: methodId,
-      fields: fields
-    };
-    createCheckpoint(modalEl, checkpointConfig, outputData);
-  } catch (error) {
-    hideModalLoading(modalEl);
-    console.error(error);
-    alert("Error running topic modeling: " + error.message);
   }
-}
-
+  
+  
 function downloadTopicModelingResults(modalEl, methodId) {
   const previewSection = modalEl.querySelector(".preview-section");
   const topics = previewSection.querySelector("ul");
