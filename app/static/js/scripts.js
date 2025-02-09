@@ -1336,16 +1336,19 @@ async function runSentimentAnalysis(modalEl, methodId) {
 
 function renderABSAResults(previewSection, data) {
   if (data.results && Array.isArray(data.results) && data.results.length > 0) {
+    // Create summary heading and table.
     const summaryHeading = document.createElement("h5");
     summaryHeading.textContent = "Sentiment Summary:";
     summaryHeading.style.marginTop = "1rem";
     previewSection.appendChild(summaryHeading);
+    
     const sentimentCounts = data.results.reduce((acc, curr) => {
       acc[curr.sentiment] = (acc[curr.sentiment] || 0) + 1;
       return acc;
     }, {});
     const total = data.results.length;
     const sentiments = ["Positive", "Neutral", "Negative"];
+    
     const summaryTable = document.createElement("table");
     summaryTable.className = "summary-table";
     summaryTable.style.marginBottom = "1rem";
@@ -1368,13 +1371,31 @@ function renderABSAResults(previewSection, data) {
       </tbody>
     `;
     previewSection.appendChild(summaryTable);
-    const detailedHeading = document.createElement("h5");
-    detailedHeading.textContent = "Detailed Sentiment Results:";
-    detailedHeading.style.marginTop = "1rem";
-    previewSection.appendChild(detailedHeading);
-    const table = document.createElement("table");
-    table.className = "results-table";
-    table.innerHTML = `
+
+    if (data.chart) {
+      const chartHeading = document.createElement("h5");
+      chartHeading.textContent = "Sentiment Distribution Chart:";
+      chartHeading.style.marginTop = "1rem";
+      previewSection.appendChild(chartHeading);
+      
+      const chartImg = document.createElement("img");
+      chartImg.src = data.chart;
+      chartImg.alt = "ABSA Sentiment Distribution Chart";
+      chartImg.style.maxWidth = "100%";
+      previewSection.appendChild(chartImg);
+    }
+
+    // Insert download button for detailed results.
+    const downloadDetailedBtn = document.createElement("button");
+    downloadDetailedBtn.className = "btn run-btn";
+    downloadDetailedBtn.textContent = "Download Detailed Table in HTML";
+    downloadDetailedBtn.style.marginTop = "1rem";
+    previewSection.appendChild(downloadDetailedBtn);
+
+    
+    const detailedTable = document.createElement("table");
+    detailedTable.className = "results-table";
+    detailedTable.innerHTML = `
       <thead>
         <tr>
           <th>Text</th>
@@ -1392,7 +1413,11 @@ function renderABSAResults(previewSection, data) {
         `).join('')}
       </tbody>
     `;
-    previewSection.appendChild(table);
+    previewSection.appendChild(detailedTable);
+    
+    downloadDetailedBtn.addEventListener("click", () => {
+      downloadTableAsHTML(detailedTable, "absa_detailed_results.html");
+    });
   } else {
     const message = document.createElement("p");
     message.textContent = "No ABSA results available.";
@@ -1403,10 +1428,12 @@ function renderABSAResults(previewSection, data) {
 function renderZeroShotSentimentResults(previewSection, data) {
   previewSection.innerHTML = "";
   if (data.results && Array.isArray(data.results) && data.results.length > 0) {
+    // Render summary table and chart
     const summaryHeading = document.createElement("h5");
     summaryHeading.textContent = "Sentiment Summary:";
     summaryHeading.style.marginTop = "1rem";
     previewSection.appendChild(summaryHeading);
+    
     const sentimentCounts = data.results.reduce((acc, curr) => {
       acc[curr.sentiment] = (acc[curr.sentiment] || 0) + 1;
       return acc;
@@ -1435,24 +1462,30 @@ function renderZeroShotSentimentResults(previewSection, data) {
       </tbody>
     `;
     previewSection.appendChild(summaryTable);
+    
     if (data.chart) {
       const chartHeading = document.createElement("h5");
       chartHeading.textContent = "Sentiment Distribution Chart:";
       chartHeading.style.marginTop = "1rem";
       previewSection.appendChild(chartHeading);
+      
       const chartImg = document.createElement("img");
       chartImg.src = data.chart;
       chartImg.alt = "Sentiment Distribution Chart";
       chartImg.style.maxWidth = "100%";
       previewSection.appendChild(chartImg);
     }
-    const detailedHeading = document.createElement("h5");
-    detailedHeading.textContent = "Zero-Shot Sentiment Analysis Results:";
-    detailedHeading.style.marginTop = "1rem";
-    previewSection.appendChild(detailedHeading);
-    const table = document.createElement("table");
-    table.className = "results-table";
-    table.innerHTML = `
+
+    // Insert a download button above the detailed table.
+    const downloadDetailedBtn = document.createElement("button");
+    downloadDetailedBtn.className = "btn run-btn";
+    downloadDetailedBtn.textContent = "Download Detailed Table in HTML";
+    downloadDetailedBtn.style.marginTop = "1rem";
+    previewSection.appendChild(downloadDetailedBtn);
+
+    const detailedTable = document.createElement("table");
+    detailedTable.className = "results-table";
+    detailedTable.innerHTML = `
       <thead>
         <tr>
           <th>Text</th>
@@ -1468,7 +1501,12 @@ function renderZeroShotSentimentResults(previewSection, data) {
         `).join('')}
       </tbody>
     `;
-    previewSection.appendChild(table);
+    previewSection.appendChild(detailedTable);
+    
+    // Use the HTML downloader (instead of CSV)
+    downloadDetailedBtn.addEventListener("click", () => {
+      downloadTableAsHTML(detailedTable, "zero_shot_detailed_results.html");
+    });
   } else {
     const message = document.createElement("p");
     message.textContent = "No sentiment analysis results available.";
@@ -1478,14 +1516,16 @@ function renderZeroShotSentimentResults(previewSection, data) {
 
 function renderOtherSentimentResults(previewSection, data) {
   previewSection.innerHTML = "";
+  
   if (data.stats) {
-    const detailedHeading = document.createElement("h5");
-    detailedHeading.textContent = "Sentiment Analysis Results:";
-    detailedHeading.style.marginTop = "1rem";
-    previewSection.appendChild(detailedHeading);
-    const table = document.createElement("table");
-    table.className = "results-table";
-    table.innerHTML = `
+    const summaryHeading = document.createElement("h5");
+    summaryHeading.textContent = "Sentiment Analysis Summary:";
+    summaryHeading.style.marginTop = "1rem";
+    previewSection.appendChild(summaryHeading);
+    
+    const summaryTable = document.createElement("table");
+    summaryTable.className = "summary-table";
+    summaryTable.innerHTML = `
       <thead>
         <tr>
           <th>Sentiment</th>
@@ -1503,24 +1543,101 @@ function renderOtherSentimentResults(previewSection, data) {
         `).join('')}
       </tbody>
     `;
-    previewSection.appendChild(table);
+    previewSection.appendChild(summaryTable);
+    
     if (data.chart) {
       const chartHeading = document.createElement("h5");
       chartHeading.textContent = "Sentiment Distribution Chart:";
       chartHeading.style.marginTop = "1rem";
       previewSection.appendChild(chartHeading);
+      
       const chartImg = document.createElement("img");
       chartImg.src = data.chart;
       chartImg.alt = "Sentiment Distribution Chart";
       chartImg.style.maxWidth = "100%";
       previewSection.appendChild(chartImg);
     }
-  } else {
+  }
+  
+  if (data.results && Array.isArray(data.results) && data.results.length > 0) {
+    // Insert a download button above the detailed table.
+    const downloadDetailedBtn = document.createElement("button");
+    downloadDetailedBtn.className = "btn run-btn";
+    downloadDetailedBtn.textContent = "Download Detailed Table in HTML";
+    downloadDetailedBtn.style.marginTop = "1rem";
+    previewSection.appendChild(downloadDetailedBtn);
+    
+    
+    const detailedTable = document.createElement("table");
+    detailedTable.className = "results-table";
+    detailedTable.innerHTML = `
+      <thead>
+        <tr>
+          <th>Text</th>
+          <th>Sentiment</th>
+          <th>Score</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.results.map(result => `
+          <tr>
+            <td>${escapeHtml(result.text)}</td>
+            <td>${result.sentiment}</td>
+            <td>${(result.score !== undefined) ? result.score : "N/A"}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    `;
+    previewSection.appendChild(detailedTable);
+    
+    downloadDetailedBtn.addEventListener("click", () => {
+      downloadTableAsHTML(detailedTable, "other_sentiment_detailed_results.html");
+    });
+  } else if (!data.stats) {
     const message = document.createElement("p");
     message.textContent = "No sentiment analysis results available.";
     previewSection.appendChild(message);
   }
 }
+
+function downloadTableAsHTML(table, filename = "table.html") {
+  if (!table) {
+    alert("No table available for download.");
+    return;
+  }
+  
+  // Wrap the table's outerHTML in a complete HTML document
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>Exported Table</title>
+      <style>
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #000; padding: 5px; text-align: left; }
+      </style>
+    </head>
+    <body>
+      ${table.outerHTML}
+    </body>
+    </html>
+  `;
+  
+  const blob = new Blob([htmlContent], { type: "text/html" });
+  const url = URL.createObjectURL(blob);
+  
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+
+
 
 function escapeHtml(unsafe) {
   return unsafe

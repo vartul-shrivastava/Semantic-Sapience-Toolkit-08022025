@@ -655,6 +655,7 @@ def process_sentiment():
             except Exception as e:
                 return jsonify({"error": f"Error during DL-based sentiment analysis: {str(e)}"}), 500
 
+        # Calculate summary statistics from the detailed results
         summary = {
             "Positive": {"Count": 0, "Average Score": 0.0},
             "Neutral":  {"Count": 0, "Average Score": 0.0},
@@ -685,6 +686,7 @@ def process_sentiment():
         else:
             percentages = {"Positive": 0, "Neutral": 0, "Negative": 0}
 
+        # Generate a bar chart for the sentiment distribution
         plt.figure(figsize=(6, 4))
         sentiments_list = list(percentages.keys())
         percents_list = list(percentages.values())
@@ -702,8 +704,10 @@ def process_sentiment():
         chart_b64 = base64.b64encode(buf.read()).decode("utf-8")
         chart_data_uri = f"data:image/png;base64,{chart_b64}"
 
+        # Return the detailed results along with summary statistics and the chart.
         return jsonify({
             "message": "Sentiment analysis completed (aggregated).",
+            "results": results,
             "stats": summary,
             "chart": chart_data_uri
         }), 200
@@ -889,14 +893,19 @@ def process_absa():
     params = request.get_json()
     if not params:
         return jsonify({"error": "No JSON payload provided."}), 400
+
     csv_b64 = params.get("base64")
     file_type = params.get("fileType", "csv").lower()
     column = params.get("column")
     aspect = params.get("aspect")
     model = params.get("model")
+
+    # Ensure required parameters are provided
     if not all([csv_b64, column, aspect]):
         missing = [param for param in ["base64", "column", "aspect"] if not params.get(param)]
         return jsonify({"error": f"Parameters 'base64', 'column', and 'aspect' are required."}), 400
+
+    # Decode and parse the file
     try:
         csv_bytes = base64.b64decode(csv_b64)
         if file_type == "csv":
@@ -907,17 +916,24 @@ def process_absa():
             return jsonify({"error": f"Unsupported file type '{file_type}'."}), 400
     except Exception as e:
         return jsonify({"error": f"Error decoding file: {str(e)}"}), 400
+
     if column not in df.columns:
         return jsonify({"error": f"Column '{column}' not found in dataset."}), 400
-    texts = df[column].astype(str).dropna().tolist()
+
+    # Remove rows that are missing or whose text is "nan" (case-insensitive)
+    df_clean = df[column].dropna()
+    df_clean = df_clean[df_clean.astype(str).str.strip().str.lower() != "nan"]
+    texts = df_clean.astype(str).tolist()
     if not texts:
         return jsonify({"error": "No valid text data found in the specified column."}), 400
+
     results = []
     try:
+        # Process each text using the provided ABSA prompt
         for text in tqdm(texts, desc="Processing ABSA", unit="text"):
             prompt = (
                 f"Analyze the sentiment towards the aspect '{aspect}' in the following text.\n\n"
-                f"Text: \"{text}\"\nAspect: {aspect}\nSentiment (Positive, Negative, Neutral) DONT WRITE ANYTHING ELSE, NOT EVEN EXPLANATION, JUST SENTIMENT IN ONE WORD:"
+                f"Text: \"{text}\"\nAspect: {aspect}\nSentiment (Positive, Negative, Neutral) DONT WRITE ANYTHING ELSE, analyze rationally. Just write sentiment only:"
             )
             response = ollama.chat(
                 model=model,
@@ -933,6 +949,8 @@ def process_absa():
             })
     except Exception as e:
         return jsonify({"error": f"Error during ABSA: {str(e)}"}), 500
+
+    # Create a summary of sentiment counts
     summary = {
         "Positive": {"Count": 0},
         "Neutral":  {"Count": 0},
@@ -942,6 +960,7 @@ def process_absa():
         s = r["sentiment"]
         if s in summary:
             summary[s]["Count"] += 1
+
     total_count = summary["Positive"]["Count"] + summary["Neutral"]["Count"] + summary["Negative"]["Count"]
     if total_count > 0:
         percentages = {
@@ -951,6 +970,8 @@ def process_absa():
         }
     else:
         percentages = {"Positive": 0, "Neutral": 0, "Negative": 0}
+
+    # Generate a bar chart for sentiment distribution
     plt.figure(figsize=(6, 4))
     sentiments_list = list(percentages.keys())
     percents_list = list(percentages.values())
@@ -960,13 +981,14 @@ def process_absa():
     plt.title("ABSA Sentiment Analysis Summary")
     for bar in bars:
         yval = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width() / 2.0, yval, f'{yval:.1f}%', va='bottom', ha='center')
+        plt.text(bar.get_x() + bar.get_width()/2.0, yval, f'{yval:.1f}%', va='bottom', ha='center')
     buf = io.BytesIO()
     plt.savefig(buf, format='png')
     plt.close()
     buf.seek(0)
     chart_b64 = base64.b64encode(buf.read()).decode("utf-8")
     chart_data_uri = f"data:image/png;base64,{chart_b64}"
+
     return jsonify({
         "message": "ABSA completed.",
         "results": results,
@@ -979,13 +1001,18 @@ def process_zero_shot_sentiment():
     params = request.get_json()
     if not params:
         return jsonify({"error": "No JSON payload provided."}), 400
+
     csv_b64 = params.get("base64")
     file_type = params.get("fileType", "csv").lower()
     column = params.get("column")
     model_name = params.get("model")
+
+    # Validate required parameters
     if not all([csv_b64, column]):
         missing = [param for param in ["base64", "column"] if not params.get(param)]
         return jsonify({"error": f"Parameters 'base64' and 'column' are required."}), 400
+
+    # Decode file and read data
     try:
         csv_bytes = base64.b64decode(csv_b64)
         if file_type == "csv":
@@ -996,16 +1023,22 @@ def process_zero_shot_sentiment():
             return jsonify({"error": f"Unsupported file type '{file_type}'."}), 400
     except Exception as e:
         return jsonify({"error": f"Error decoding file: {str(e)}"}), 400
+
     if column not in df.columns:
         return jsonify({"error": f"Column '{column}' not found in dataset."}), 400
-    texts = df[column].astype(str).dropna().tolist()
+
+    # Remove missing values and filter out cells that become "nan" after conversion
+    df_clean = df[column].dropna()
+    df_clean = df_clean[df_clean.astype(str).str.strip().str.lower() != "nan"]
+    texts = df_clean.astype(str).tolist()
     if not texts:
         return jsonify({"error": "No valid text data found in the specified column."}), 400
+
     results = []
     try:
         for text in tqdm(texts, desc="Processing zero-shot sentiment", unit="text"):
             prompt = (
-                f"Please label the following text as Positive, Negative, or Neutral. Dont give any explanation, just label rationally and nothing else.\n\n"
+                f"Please label the following text as Positive, Negative, or Neutral. Dont give any explanation, just label rationally and nothing else. Just write sentiment only.\n\n"
                 f"Text: \"{text}\"\n\nSentiment:"
             )
             response = ollama.chat(
@@ -1021,6 +1054,8 @@ def process_zero_shot_sentiment():
             })
     except Exception as e:
         return jsonify({"error": f"Error during zero-shot sentiment analysis: {str(e)}"}), 500
+
+    # Create summary of sentiment counts
     summary = {
         "Positive": {"Count": 0},
         "Neutral":  {"Count": 0},
@@ -1030,6 +1065,7 @@ def process_zero_shot_sentiment():
         s = r["sentiment"]
         if s in summary:
             summary[s]["Count"] += 1
+
     total_count = summary["Positive"]["Count"] + summary["Neutral"]["Count"] + summary["Negative"]["Count"]
     if total_count > 0:
         percentages = {
@@ -1039,6 +1075,8 @@ def process_zero_shot_sentiment():
         }
     else:
         percentages = {"Positive": 0, "Neutral": 0, "Negative": 0}
+
+    # Generate a bar chart for the sentiment distribution
     plt.figure(figsize=(6, 4))
     sentiments_list = list(percentages.keys())
     percents_list = list(percentages.values())
@@ -1048,19 +1086,21 @@ def process_zero_shot_sentiment():
     plt.title("Zero-Shot Sentiment Analysis Summary")
     for bar in bars:
         yval = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width()/2.0, yval, f'{yval:.1f}%', va='bottom', ha='center')
+        plt.text(bar.get_x() + bar.get_width() / 2.0, yval, f'{yval:.1f}%', va='bottom', ha='center')
     buf = io.BytesIO()
     plt.savefig(buf, format='png')
     plt.close()
     buf.seek(0)
     chart_b64 = base64.b64encode(buf.read()).decode("utf-8")
     chart_data_uri = f"data:image/png;base64,{chart_b64}"
+
     return jsonify({
         "message": "Zero-shot sentiment analysis completed.",
         "results": results,
         "stats": summary,
         "chart": chart_data_uri
     }), 200
+
 
 @app.route('/system_stats', methods=['GET'])
 def system_stats():
