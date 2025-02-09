@@ -1210,6 +1210,9 @@ async function runTopicModeling(modalEl, methodId) {
         plotImg.src = data.coherence_analysis.coherence_plot;
         plotImg.alt = "Coherence Analysis Plot";
         plotImg.style.maxWidth = "100%";
+        const bestInfo = document.createElement("p");
+        bestInfo.textContent = `Best Coherence Value: ${data.coherence_analysis.best_coherence.toFixed(4)} at ${data.coherence_analysis.best_topic} topics.`;
+        coherenceDiv.appendChild(bestInfo);
         coherenceDiv.appendChild(plotImg);
         previewSection.appendChild(coherenceDiv);
       }
