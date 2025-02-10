@@ -11,3 +11,7 @@ textblob
 transformers
 openpyxl
 ollama
+gensim
+matplotlib
+tqdm
+psutil
